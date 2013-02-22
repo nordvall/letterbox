@@ -9,5 +9,6 @@ namespace Letterbox.Receiver
     {
         void Subscribe();
         void Unsubscribe();
+        event SubscriberEventHandler MessageFailed;
     }
 }

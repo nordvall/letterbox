@@ -8,6 +8,7 @@ namespace Letterbox.Receiver
     public class ServiceBus
     {
         private List<ISubscriber> _subscribers;
+
         public ServiceBus()
         {
             _subscribers = new List<ISubscriber>();
@@ -16,8 +17,17 @@ namespace Letterbox.Receiver
         public void Configure<T>(Subscription<T> subscription)
         {
             ISubscriber subscriber = SubscriberFactory.CreateSubscription(subscription);
+            subscriber.MessageFailed += subscriber_MessageFailed;
             _subscribers.Add(subscriber);
             
+        }
+
+        void subscriber_MessageFailed(ISubscriber sender, SubscriberEventArgs e)
+        {
+            if (MessageFailed != null)
+            {
+                MessageFailed(sender, e);
+            }
         }
 
         public void Start()
@@ -35,5 +45,9 @@ namespace Letterbox.Receiver
                 subscriber.Unsubscribe();
             }
         }
+
+        public event SubscriberEventHandler MessageReceived;
+        public event SubscriberEventHandler MessageConsumed;
+        public event SubscriberEventHandler MessageFailed;
     }
 }

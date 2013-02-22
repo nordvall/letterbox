@@ -9,8 +9,6 @@ namespace Letterbox.Receiver
 {
     public class Subscriber<T> : ISubscriber
     {
-        private string _topicName;
-        private string _subscriptionName;
         private IConsumer<T> _consumer;
         private SubscriptionClient _client;
 
@@ -28,17 +26,52 @@ namespace Letterbox.Receiver
 
         private void MessageArrived(IAsyncResult result)
         {
-            //Console.WriteLine("{0} receiving on thread {1}", _topicName, Thread.CurrentThread.ManagedThreadId);
-
             SubscriptionClient client = result.AsyncState as SubscriptionClient;
-            BrokeredMessage message = client.EndReceive(result);
+            BrokeredMessage message = null;
 
-            if (message != null)
+            try
             {
-                T inner = message.GetBody<T>();
-                _consumer.Consume(inner);
+                message = client.EndReceive(result);
 
-                message.Complete();
+                if (message != null)
+                {
+                    T inner = message.GetBody<T>();
+                    _consumer.Consume(inner);
+
+                    message.Complete();
+
+                    if (MessageConsumed != null)
+                    {
+                        var args = new SubscriberEventArgs()
+                        {
+                            EventType = SubscriberEventArgs.SubscriberEventType.Consumed,
+                            TopicName = _client.TopicPath,
+                            SubscriptionName = _client.Name
+                        };
+
+                        MessageConsumed(this, args);
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                if (message != null)
+                {
+                    if (MessageFailed != null)
+                    {
+                        var args = new SubscriberEventArgs()
+                        {
+                            EventType = SubscriberEventArgs.SubscriberEventType.Failed,
+                            Message = ex.Message,
+                            TopicName = _client.TopicPath,
+                            SubscriptionName = _client.Name
+                        };
+
+                        MessageFailed(this, args);
+                    }
+                    message.DeadLetter();
+                    //message.Abandon();
+                }
             }
 
             Subscribe();
@@ -48,5 +81,11 @@ namespace Letterbox.Receiver
         {
             _client.Close();
         }
+
+        public event SubscriberEventHandler MessageReceived;
+        public event SubscriberEventHandler MessageConsumed;
+        public event SubscriberEventHandler MessageFailed;
     }
+
+    
 }
