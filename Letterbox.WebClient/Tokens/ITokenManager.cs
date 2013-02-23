@@ -1,5 +1,6 @@
 ﻿using System;
-namespace Letterbox.WebClient
+
+namespace Letterbox.WebClient.Tokens
 {
     public interface ITokenManager
     {

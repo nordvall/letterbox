@@ -7,6 +7,8 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+using Letterbox.WebClient.Tokens;
+using Letterbox.WebClient.Web;
 
 namespace Letterbox.WebClient
 {
@@ -27,7 +29,7 @@ namespace Letterbox.WebClient
         {
             _webClient = webClient;
             _serviceBusAddress = serviceBusAdress;
-            _tokenManager = new TokenManager(serviceBusAdress, _webClient);
+            _tokenManager = tokenManager;
         }
 
         public void SubmitToTopic(string topicName, object message)

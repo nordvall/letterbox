@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 
-namespace Letterbox.WebClient
+namespace Letterbox.WebClient.Web
 {
     public class WebClientWrapper : IWebClient
     {

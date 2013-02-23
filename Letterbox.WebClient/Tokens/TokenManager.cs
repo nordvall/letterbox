@@ -6,8 +6,9 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Web;
+using Letterbox.WebClient.Web;
 
-namespace Letterbox.WebClient
+namespace Letterbox.WebClient.Tokens
 {
     public class TokenManager : ITokenManager
     {
@@ -27,15 +28,13 @@ namespace Letterbox.WebClient
             _serviceBusAddress = serviceBusAdress;
         }
 
-        public string UserName { get; set; }
+        public NetworkCredential Credentials { private get; set; }
 
-        public string Password { private get; set; }
-        
         public AccessToken GetAccessToken()
         {
             if (_cachedToken == null || _cachedToken.Exprires < DateTime.UtcNow.AddMinutes(5))
             {
-                _cachedToken = RequestToken(UserName, Password);
+                _cachedToken = RequestToken(Credentials.UserName, Credentials.Password);
             }
 
             return _cachedToken;
