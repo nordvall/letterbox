@@ -8,8 +8,6 @@ namespace Letterbox.WebClient
 {
     public interface IWebClient
     {
-        WebHeaderCollection Headers { get; set; }
-
-        byte[] UploadData(Uri address, string method, byte[] data);
+        string SendRequest(HttpWebRequest request);
     }
 }

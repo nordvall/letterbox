@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -13,20 +14,21 @@ namespace Letterbox.WebClient
     {
         private IWebClient _webClient;
         private Uri _serviceBusAddress;
+        private ITokenManager _tokenManager;
 
-        public ServiceBusClient(Uri serviceBusAdress)
+        public ServiceBusClient(Uri serviceBusAdress, ITokenManager tokenManager)
         {
             _webClient = new WebClientWrapper();
             _serviceBusAddress = serviceBusAdress;
+            _tokenManager = tokenManager;
         }
 
-        public ServiceBusClient(Uri serviceBusAdress, IWebClient webClient)
+        public ServiceBusClient(Uri serviceBusAdress, ITokenManager tokenManager, IWebClient webClient)
         {
             _webClient = webClient;
             _serviceBusAddress = serviceBusAdress;
+            _tokenManager = new TokenManager(serviceBusAdress, _webClient);
         }
-
-        public string AccessToken { get; set; }
 
         public void SubmitToTopic(string topicName, object message)
         {
@@ -34,22 +36,44 @@ namespace Letterbox.WebClient
 
             byte[] data = SerializeMessage(message);
 
-            ConfigureAuthorizationHeader();
-            _webClient.Headers.Add(System.Net.HttpRequestHeader.ContentType, "application/atom+xml;type=entry;charset=utf-8");
+            HttpWebRequest request = CreateWebRequest(topicUri, data);
 
-            byte[] responseBytes = _webClient.UploadData(topicUri, "POST", data);
-            string response = Encoding.UTF8.GetString(responseBytes);
+            _webClient.SendRequest(request);
         }
 
         public string ReceiveFromTopic(string topicName, string subscriptionName)
         {
             Uri subscriptionUri = GenerateSubscriptionUri(topicName, subscriptionName);
 
-            ConfigureAuthorizationHeader();
+            HttpWebRequest request = CreateWebRequest(subscriptionUri, new byte[0]);
 
-            byte[] responseBytes = _webClient.UploadData(subscriptionUri, "POST", new byte[0]);
-            string response = Encoding.UTF8.GetString(responseBytes);
+            string response = _webClient.SendRequest(request);
             return response;
+        }
+
+
+        private HttpWebRequest CreateWebRequest(Uri requestUri, byte[] data)
+        {
+            HttpWebRequest request = WebRequest.Create(requestUri) as HttpWebRequest;
+            request.AllowAutoRedirect = true;
+            request.MaximumAutomaticRedirections = 1;
+            request.Method = "POST";
+            request.ContentType = "application/atom+xml;type=entry;charset=utf-8";
+            request.ContentLength = data.Length;
+
+            AccessToken token = _tokenManager.GetAccessToken();
+            string tokenHeaderValue = string.Format("WRAP access_token=\"{0}\"", token.TokenValue);
+            request.Headers.Add(HttpRequestHeader.Authorization, tokenHeaderValue);
+
+            if (data.Length > 0)
+            {
+                using (Stream requestStream = request.GetRequestStream())
+                {
+                    requestStream.Write(data, 0, data.Length);
+                }
+            }
+
+            return request;
         }
 
         private byte[] SerializeMessage(object message)
@@ -64,14 +88,7 @@ namespace Letterbox.WebClient
 
             return stream.ToArray();
         }
-
-        private void ConfigureAuthorizationHeader()
-        {
-            string tokenValue = string.Format("WRAP access_token=\"{0}\"", AccessToken);
-            _webClient.Headers.Add(System.Net.HttpRequestHeader.Authorization, tokenValue);
-            
-        }
-
+        
         public void SubmitToQueue(string queueName, object message)
         {
 
