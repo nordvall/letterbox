@@ -17,17 +17,12 @@ namespace Letterbox.Receiver
         public void Configure<T>(Subscription<T> subscription)
         {
             ISubscriber subscriber = SubscriberFactory.CreateSubscription(subscription);
-            subscriber.MessageFailed += subscriber_MessageFailed;
+            subscriber.MessageReceived += OnMessageReceived;
+            subscriber.MessageFailed += OnMessageFailed;
+            subscriber.MessageConsumed += OnMessageConsumed;
+            
             _subscribers.Add(subscriber);
             
-        }
-
-        void subscriber_MessageFailed(ISubscriber sender, SubscriberEventArgs e)
-        {
-            if (MessageFailed != null)
-            {
-                MessageFailed(sender, e);
-            }
         }
 
         public void Start()
@@ -43,6 +38,30 @@ namespace Letterbox.Receiver
             foreach (ISubscriber subscriber in _subscribers)
             {
                 subscriber.Unsubscribe();
+            }
+        }
+
+        private void OnMessageReceived(ISubscriber sender, SubscriberEventArgs e)
+        {
+            if (MessageReceived != null)
+            {
+                MessageReceived(sender, e);
+            }
+        }
+
+        private void OnMessageConsumed(ISubscriber sender, SubscriberEventArgs e)
+        {
+            if (MessageConsumed != null)
+            {
+                MessageConsumed(sender, e);
+            }
+        }
+
+        private void OnMessageFailed(ISubscriber sender, SubscriberEventArgs e)
+        {
+            if (MessageFailed != null)
+            {
+                MessageFailed(sender, e);
             }
         }
 

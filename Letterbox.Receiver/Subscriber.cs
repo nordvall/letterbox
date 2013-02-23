@@ -18,6 +18,16 @@ namespace Letterbox.Receiver
             _client = client;
         }
 
+        public string SubscriptionName
+        {
+            get { return _client.Name; }
+        }
+
+        public string TopicName
+        {
+            get { return _client.TopicPath; }
+        }
+
 
         public void Subscribe()
         {
@@ -33,6 +43,8 @@ namespace Letterbox.Receiver
             {
                 message = client.EndReceive(result);
 
+                OnMessageReceived(message);
+
                 if (message != null)
                 {
                     T inner = message.GetBody<T>();
@@ -40,42 +52,67 @@ namespace Letterbox.Receiver
 
                     message.Complete();
 
-                    if (MessageConsumed != null)
-                    {
-                        var args = new SubscriberEventArgs()
-                        {
-                            EventType = SubscriberEventArgs.SubscriberEventType.Consumed,
-                            TopicName = _client.TopicPath,
-                            SubscriptionName = _client.Name
-                        };
-
-                        MessageConsumed(this, args);
-                    }
+                    OnMessageConsumed(message);
                 }
             }
             catch(Exception ex)
             {
                 if (message != null)
                 {
-                    if (MessageFailed != null)
-                    {
-                        var args = new SubscriberEventArgs()
-                        {
-                            EventType = SubscriberEventArgs.SubscriberEventType.Failed,
-                            Message = ex.Message,
-                            TopicName = _client.TopicPath,
-                            SubscriptionName = _client.Name
-                        };
-
-                        MessageFailed(this, args);
-                    }
                     message.DeadLetter();
                     //message.Abandon();
                 }
+
+                OnMessageFailed(message, ex);
             }
 
             Subscribe();
         }
+
+        private void OnMessageReceived(BrokeredMessage message)
+        {
+            if (MessageReceived != null)
+            {
+                var args = CreateEventArgs(message, SubscriberEventArgs.SubscriberEventType.Received);
+                MessageReceived(this, args);
+            }
+        }
+
+        private void OnMessageConsumed(BrokeredMessage message)
+        {
+            if (MessageConsumed != null)
+            {
+                var args = CreateEventArgs(message, SubscriberEventArgs.SubscriberEventType.Consumed);
+                MessageConsumed(this, args);
+            }
+        }
+
+        private void OnMessageFailed(BrokeredMessage message, Exception ex)
+        {
+            if (MessageFailed != null)
+            {
+                var args = CreateEventArgs(message, SubscriberEventArgs.SubscriberEventType.Consumed);
+                args.ErrorMessage = ex.Message;
+
+                MessageFailed(this, args);
+            }
+        }
+
+        private SubscriberEventArgs CreateEventArgs(BrokeredMessage message, SubscriberEventArgs.SubscriberEventType eventType)
+        {
+            var args = new SubscriberEventArgs();
+            args.EventType = eventType;
+
+            if (message != null)
+            {
+                args.MessageId = message.MessageId;
+                args.Size = message.Size;
+                args.EnquedTime = message.EnqueuedTimeUtc;
+            }
+
+            return args;
+        }
+
 
         public void Unsubscribe()
         {
@@ -86,6 +123,4 @@ namespace Letterbox.Receiver
         public event SubscriberEventHandler MessageConsumed;
         public event SubscriberEventHandler MessageFailed;
     }
-
-    
 }

@@ -8,10 +8,10 @@ namespace Letterbox.Receiver
     public class SubscriberEventArgs : EventArgs
     {
         public SubscriberEventType EventType { get; set; }
-        public string TopicName { get; set; }
-        public string SubscriptionName { get; set; }
-
-        public string Message { get; set; }
+        public string MessageId { get; set; }
+        public DateTime EnquedTime { get; set; }
+        public long Size { get; set; }
+        public string ErrorMessage { get; set; }
 
         public enum SubscriberEventType
         {
