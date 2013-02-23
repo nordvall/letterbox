@@ -3,29 +3,30 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Letterbox.Common;
+using Letterbox.Receiver.Clients;
 using Microsoft.ServiceBus.Messaging;
 
-namespace Letterbox.Receiver
+namespace Letterbox.Receiver.Subscriptions
 {
+    /// <summary>
+    /// Uses an IClient to poll for messages for one specific queue/topic. 
+    /// Calls IConsumer for each message received.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class Subscriber<T> : ISubscriber
     {
         private IConsumer<T> _consumer;
-        private SubscriptionClient _client;
+        private IClient _client;
 
-        public Subscriber(SubscriptionClient client, IConsumer<T> consumer)
+        public Subscriber(IClient client, IConsumer<T> consumer)
         {
             _consumer = consumer;
             _client = client;
         }
 
-        public string SubscriptionName
+        public string Name
         {
             get { return _client.Name; }
-        }
-
-        public string TopicName
-        {
-            get { return _client.TopicPath; }
         }
 
 
@@ -36,12 +37,11 @@ namespace Letterbox.Receiver
 
         private void MessageArrived(IAsyncResult result)
         {
-            SubscriptionClient client = result.AsyncState as SubscriptionClient;
             BrokeredMessage message = null;
 
             try
             {
-                message = client.EndReceive(result);
+                message = _client.EndReceive(result);
 
                 OnMessageReceived(message);
 
@@ -69,6 +69,9 @@ namespace Letterbox.Receiver
             Subscribe();
         }
 
+
+        public event SubscriberEventHandler MessageReceived;
+
         private void OnMessageReceived(BrokeredMessage message)
         {
             if (MessageReceived != null)
@@ -78,6 +81,8 @@ namespace Letterbox.Receiver
             }
         }
 
+        public event SubscriberEventHandler MessageConsumed;
+
         private void OnMessageConsumed(BrokeredMessage message)
         {
             if (MessageConsumed != null)
@@ -86,6 +91,8 @@ namespace Letterbox.Receiver
                 MessageConsumed(this, args);
             }
         }
+
+        public event SubscriberEventHandler MessageFailed;
 
         private void OnMessageFailed(BrokeredMessage message, Exception ex)
         {
@@ -118,9 +125,5 @@ namespace Letterbox.Receiver
         {
             _client.Close();
         }
-
-        public event SubscriberEventHandler MessageReceived;
-        public event SubscriberEventHandler MessageConsumed;
-        public event SubscriberEventHandler MessageFailed;
     }
 }

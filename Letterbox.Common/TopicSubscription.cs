@@ -4,15 +4,15 @@ using System.Linq;
 using System.Text;
 using Letterbox.Common;
 
-namespace Letterbox.Receiver
+namespace Letterbox.Common.Subscriptions
 {
-    public class Subscription<T>
+    public class TopicSubscription<T>
     {
-        public Subscription()
+        public TopicSubscription()
         {
 
         }
-        public Subscription(string topicName, string subscriptionName, IConsumer<T> consumer)
+        public TopicSubscription(string topicName, string subscriptionName, IConsumer<T> consumer)
         {
             TopicName = topicName;
             SubscriptionName = subscriptionName;

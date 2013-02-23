@@ -45,14 +45,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ISubscriber.cs" />
+    <Compile Include="Clients\IClientFactory.cs" />
+    <Compile Include="Clients\SubscriptionClientWrapper.cs" />
+    <Compile Include="Clients\IClient.cs" />
+    <Compile Include="Subscriptions\ISubscriber.cs" />
+    <Compile Include="Clients\QueueClientWrapper.cs" />
     <Compile Include="ServiceBus.cs" />
-    <Compile Include="Subscriber.cs" />
+    <Compile Include="Subscriptions\Subscriber.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SubscriberEventArgs.cs" />
-    <Compile Include="SubscriberEventHandler.cs" />
-    <Compile Include="SubscriberFactory.cs" />
-    <Compile Include="Subscription.cs" />
+    <Compile Include="Subscriptions\SubscriberEventArgs.cs" />
+    <Compile Include="Subscriptions\SubscriberEventHandler.cs" />
+    <Compile Include="Clients\AzureClientFactory.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

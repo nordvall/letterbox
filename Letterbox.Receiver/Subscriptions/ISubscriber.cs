@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Letterbox.Receiver
+namespace Letterbox.Receiver.Subscriptions
 {
     public interface ISubscriber
     {
         void Subscribe();
         void Unsubscribe();
-        string SubscriptionName { get; }
-        string TopicName { get; }
+        string Name { get; }
         event SubscriberEventHandler MessageReceived;
         event SubscriberEventHandler MessageConsumed;
         event SubscriberEventHandler MessageFailed;
