@@ -8,7 +8,7 @@ namespace Letterbox.Receiver.Clients
     /// </summary>
     public interface IClientFactory
     {
-        IClient CreateClient<T>(QueueSubscription<T> subscription);
-        IClient CreateClient<T>(TopicSubscription<T> subscription);
+        IClient CreateQueueClient<T>(QueueSubscription<T> subscription);
+        IClient CreateTopicClient<T>(TopicSubscription<T> subscription);
     }
 }

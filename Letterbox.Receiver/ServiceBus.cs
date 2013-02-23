@@ -31,13 +31,13 @@ namespace Letterbox.Receiver
 
         public void Configure<T>(QueueSubscription<T> subscription)
         {
-            IClient client = _clientFactory.CreateClient(subscription);
+            IClient client = _clientFactory.CreateQueueClient(subscription);
             CreateAndConfigureSubscriber<T>(client, subscription.Consumer);
         }
 
         public void Configure<T>(TopicSubscription<T> subscription)
         {
-            IClient client = _clientFactory.CreateClient(subscription);
+            IClient client = _clientFactory.CreateTopicClient(subscription);
             CreateAndConfigureSubscriber<T>(client, subscription.Consumer);
         }
 

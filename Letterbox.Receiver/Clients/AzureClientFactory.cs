@@ -23,7 +23,7 @@ namespace Letterbox.Receiver.Clients
             _stsUri = stsUri;
         }
 
-        public IClient CreateClient<T>(TopicSubscription<T> subscription)
+        public IClient CreateTopicClient<T>(TopicSubscription<T> subscription)
         {
             var factory = GetMessagingFactory();
             InitializeTopicAndSubscription(subscription.TopicName, subscription.SubscriptionName);
@@ -32,7 +32,7 @@ namespace Letterbox.Receiver.Clients
             return wrapper;
         }
 
-        public IClient CreateClient<T>(QueueSubscription<T> subscription)
+        public IClient CreateQueueClient<T>(QueueSubscription<T> subscription)
         {
             var factory = GetMessagingFactory();
             QueueClient client = factory.CreateQueueClient(subscription.QueueName);
