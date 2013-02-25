@@ -7,8 +7,8 @@
     <ProjectGuid>{3BA3CBE6-58A2-4A06-88F3-324280E5972E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Letterbox.Receiver</RootNamespace>
-    <AssemblyName>Letterbox.Receiver</AssemblyName>
+    <RootNamespace>Letterbox.ApiClient</RootNamespace>
+    <AssemblyName>Letterbox.ApiClient</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -61,9 +61,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Letterbox.Common\Letterbox.Common.csproj">
+    <ProjectReference Include="..\Letterbox\Letterbox.csproj">
       <Project>{a1654235-d8a5-4f40-b372-16bca417566f}</Project>
-      <Name>Letterbox.Common</Name>
+      <Name>Letterbox</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

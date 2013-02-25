@@ -49,6 +49,12 @@
     <Compile Include="Tokens\TokenManager.cs" />
     <Compile Include="Web\WebClientWrapper.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Letterbox\Letterbox.csproj">
+      <Project>{a1654235-d8a5-4f40-b372-16bca417566f}</Project>
+      <Name>Letterbox</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
