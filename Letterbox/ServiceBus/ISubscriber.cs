@@ -5,13 +5,13 @@ using System.Text;
 
 namespace Letterbox.Receiver.Subscriptions
 {
-    public interface ISubscriber
+    internal interface ISubscriber
     {
         void Subscribe();
         void Unsubscribe();
         string Name { get; }
-        event SubscriberEventHandler MessageReceived;
-        event SubscriberEventHandler MessageConsumed;
-        event SubscriberEventHandler MessageFailed;
+        event SubscriberEventHandler EnvelopeReceived;
+        event SubscriberEventHandler EnvelopeConsumed;
+        event SubscriberEventHandler EnvelopeFailed;
     }
 }

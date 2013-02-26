@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Letterbox.Clients;
 using Letterbox.Common;
 using Letterbox.Common.Subscriptions;
 using Letterbox.Receiver.Clients;
@@ -23,31 +24,25 @@ namespace Letterbox.Receiver
             _clientFactory = clientFactory;
         }
 
-        public ServiceBus(Uri queueUri, Uri stsUri)
+        public void Configure<T>(QueueSubscription<T> subscription) where T : class, new()
         {
-            _subscribers = new List<ISubscriber>();
-            _clientFactory = new AzureClientFactory(queueUri, stsUri);
-        }
-
-        public void Configure<T>(QueueSubscription<T> subscription)
-        {
-            IClient client = _clientFactory.CreateQueueClient(subscription);
+            IReceiveClient client = _clientFactory.CreateQueueClient(subscription.QueueName);
             CreateAndConfigureSubscriber<T>(client, subscription.Consumer);
         }
 
-        public void Configure<T>(TopicSubscription<T> subscription)
+        public void Configure<T>(TopicSubscription<T> subscription) where T : class, new()
         {
-            IClient client = _clientFactory.CreateTopicClient(subscription);
+            IReceiveClient client = _clientFactory.CreateSubscriptionClient(subscription.TopicName, subscription.SubscriptionName);
             CreateAndConfigureSubscriber<T>(client, subscription.Consumer);
         }
 
-        private void CreateAndConfigureSubscriber<T>(IClient client, IConsumer<T> consumer)
+        private void CreateAndConfigureSubscriber<T>(IReceiveClient client, IConsumer<T> consumer) where T : class, new()
         {
             ISubscriber subscriber = new Subscriber<T>(client, consumer);
             
-            subscriber.MessageReceived += OnMessageReceived;
-            subscriber.MessageFailed += OnMessageFailed;
-            subscriber.MessageConsumed += OnMessageConsumed;
+            subscriber.EnvelopeReceived += OnMessageReceived;
+            subscriber.EnvelopeFailed += OnMessageFailed;
+            subscriber.EnvelopeConsumed += OnMessageConsumed;
 
             _subscribers.Add(subscriber);
         }
@@ -70,31 +65,31 @@ namespace Letterbox.Receiver
 
         public event SubscriberEventHandler MessageReceived;
 
-        private void OnMessageReceived(ISubscriber sender, SubscriberEventArgs e)
+        private void OnMessageReceived(SubscriberEventArgs e)
         {
             if (MessageReceived != null)
             {
-                MessageReceived(sender, e);
+                MessageReceived(e);
             }
         }
 
         public event SubscriberEventHandler MessageConsumed;
 
-        private void OnMessageConsumed(ISubscriber sender, SubscriberEventArgs e)
+        private void OnMessageConsumed(SubscriberEventArgs e)
         {
             if (MessageConsumed != null)
             {
-                MessageConsumed(sender, e);
+                MessageConsumed(e);
             }
         }
 
         public event SubscriberEventHandler MessageFailed;
 
-        private void OnMessageFailed(ISubscriber sender, SubscriberEventArgs e)
+        private void OnMessageFailed(SubscriberEventArgs e)
         {
             if (MessageFailed != null)
             {
-                MessageFailed(sender, e);
+                MessageFailed(e);
             }
         }
     }

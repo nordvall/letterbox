@@ -8,6 +8,8 @@ namespace Letterbox.WebClient.Web
 {
     public interface IWebClient
     {
-        string SendRequest(HttpWebRequest request);
+        HttpWebResponse SendRequest(HttpWebRequest request);
+        IAsyncResult BeginSendRequest(HttpWebRequest request, AsyncCallback callback);
+        HttpWebResponse EndSendRequest(IAsyncResult asyncResult);
     }
 }

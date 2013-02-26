@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Letterbox.ApiClient.Clients;
+using Letterbox.Clients;
 using Letterbox.Common;
 using Letterbox.Common.Subscriptions;
 using Microsoft.ServiceBus;
@@ -23,19 +25,28 @@ namespace Letterbox.Receiver.Clients
             _stsUri = stsUri;
         }
 
-        public IClient CreateTopicClient<T>(TopicSubscription<T> subscription)
+        public IReceiveClient CreateSubscriptionClient(string topicName, string subscriptionName)
         {
             var factory = GetMessagingFactory();
-            InitializeTopicAndSubscription(subscription.TopicName, subscription.SubscriptionName);
-            SubscriptionClient client = factory.CreateSubscriptionClient(subscription.TopicName, subscription.SubscriptionName);
+            InitializeTopicAndSubscription(topicName, subscriptionName);
+            SubscriptionClient client = factory.CreateSubscriptionClient(topicName, subscriptionName);
             var wrapper = new SubscriptionClientWrapper(client);
             return wrapper;
         }
 
-        public IClient CreateQueueClient<T>(QueueSubscription<T> subscription)
+        public ISendClient CreateTopicClient(string topicName)
         {
             var factory = GetMessagingFactory();
-            QueueClient client = factory.CreateQueueClient(subscription.QueueName);
+            EnsureTopic(topicName);
+            TopicClient client = factory.CreateTopicClient(topicName);
+            var wrapper = new TopicClientWrapper(client);
+            return wrapper;
+        }
+
+        public ISendReceiveClient CreateQueueClient(string queueName)
+        {
+            var factory = GetMessagingFactory();
+            QueueClient client = factory.CreateQueueClient(queueName);
             var wrapper = new QueueClientWrapper(client);
             return wrapper;
         }

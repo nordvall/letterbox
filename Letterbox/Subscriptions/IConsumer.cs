@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Letterbox.Common
 {
-    public interface IConsumer<T> : IConsumer
+    public interface IConsumer<T> //: IConsumer
     {
         void Consume(T message);
     }

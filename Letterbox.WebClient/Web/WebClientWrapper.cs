@@ -9,19 +9,20 @@ namespace Letterbox.WebClient.Web
 {
     public class WebClientWrapper : IWebClient
     {
-        public string SendRequest(HttpWebRequest request)
+        public HttpWebResponse SendRequest(HttpWebRequest request)
         {
-            using (var response = request.GetResponse() as HttpWebResponse)
-            {
-                using (Stream stream = response.GetResponseStream())
-                {
-                    using (var reader = new StreamReader(stream, Encoding.UTF8))
-                    {
-                        string content = reader.ReadToEnd();
-                        return content;
-                    }
-                }
-            }
+            return request.GetResponse() as HttpWebResponse;
+        }
+
+        public IAsyncResult BeginSendRequest(HttpWebRequest request, AsyncCallback callback)
+        {
+            return request.BeginGetResponse(callback, request);
+        }
+
+        public HttpWebResponse EndSendRequest(IAsyncResult asyncResult)
+        {
+            var request = asyncResult.AsyncState as HttpWebRequest;
+            return request.EndGetResponse(asyncResult) as HttpWebResponse;
         }
     }
 }

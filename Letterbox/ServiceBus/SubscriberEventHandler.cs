@@ -5,5 +5,5 @@ using System.Text;
 
 namespace Letterbox.Receiver.Subscriptions
 {
-    public delegate void SubscriberEventHandler(ISubscriber sender, SubscriberEventArgs e);
+    public delegate void SubscriberEventHandler(SubscriberEventArgs e);
 }

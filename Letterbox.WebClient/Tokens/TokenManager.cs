@@ -53,10 +53,16 @@ namespace Letterbox.WebClient.Tokens
 
             HttpWebRequest request = CreateWebRequest(requestUri, requestContent);
 
-            string tokenValue = _webClient.SendRequest(request);
-
-            var accessToken = new AccessToken(tokenValue);
-            return accessToken;
+            HttpWebResponse response = _webClient.SendRequest(request);
+            using (Stream stream = response.GetResponseStream())
+            {
+                using (var reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    string content = reader.ReadToEnd();
+                    var accessToken = new AccessToken(content);
+                    return accessToken;
+                }
+            }
         }
 
 

@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Letterbox.ApiClient.Clients;
+using Letterbox.Clients;
 using Microsoft.ServiceBus.Messaging;
 
 namespace Letterbox.Receiver.Clients
 {
-    public class SubscriptionClientWrapper : IClient
+    public class SubscriptionClientWrapper : IReceiveClient
     {
         SubscriptionClient _client;
 
@@ -20,14 +22,43 @@ namespace Letterbox.Receiver.Clients
             get { return _client.Name; } 
         }
 
-        public void BeginReceive(TimeSpan serverWaitTime, AsyncCallback callback, object state)
+        public int Timeout { get; set; }
+
+        public void BeginReceive(AsyncCallback callback)
         {
-            _client.BeginReceive(serverWaitTime, callback, state);
+            _client.BeginReceive(Timeout, callback, _client);
         }
 
-        public BrokeredMessage EndReceive(IAsyncResult result)
+        public Envelope EndReceive(IAsyncResult result)
         {
-            return _client.EndReceive(result);
+            BrokeredMessage message = _client.EndReceive(result);
+            return new ApiClientEnvelope(message);
+        }
+
+        public Envelope Receive()
+        {
+            BrokeredMessage message = _client.Receive();
+            return new ApiClientEnvelope(message);
+        }
+
+        public void DeadLetter(Guid lockToken)
+        {
+            _client.DeadLetter(lockToken);
+        }
+
+        public void Defer(Guid lockToken)
+        {
+            _client.Defer(lockToken);
+        }
+
+        public void Abandon(Guid lockToken)
+        {
+            _client.Abandon(lockToken);
+        }
+
+        public void Complete(Guid lockToken)
+        {
+            _client.Complete(lockToken);
         }
 
         public void Close()
