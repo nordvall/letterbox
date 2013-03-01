@@ -14,9 +14,9 @@ namespace Letterbox.WebClient.Web
             return request.GetResponse() as HttpWebResponse;
         }
 
-        public IAsyncResult BeginSendRequest(HttpWebRequest request, AsyncCallback callback)
+        public IAsyncResult BeginSendRequest(HttpWebRequest request, AsyncCallback callback, object state)
         {
-            return request.BeginGetResponse(callback, request);
+            return request.BeginGetResponse(callback, state);
         }
 
         public HttpWebResponse EndSendRequest(IAsyncResult asyncResult)

@@ -7,7 +7,7 @@ namespace Letterbox.Clients
 {
     public interface IReceiveClient
     {
-        void BeginReceive(AsyncCallback callback);
+        IAsyncResult BeginReceive(AsyncCallback callback);
         Envelope EndReceive(IAsyncResult result);
         Envelope Receive();
         void DeadLetter(Guid lockTooken);

@@ -8,13 +8,14 @@ using Microsoft.ServiceBus.Messaging;
 
 namespace Letterbox.Receiver.Clients
 {
-    public class QueueClientWrapper : ISendReceiveClient
+    public class QueueClientWrapper : ReceiveClientBase, ISendReceiveClient
     {
         QueueClient _client;
 
         public QueueClientWrapper(QueueClient client)
         {
             _client = client;
+            Timeout = 15;
         }
 
         public string Name
@@ -22,22 +23,13 @@ namespace Letterbox.Receiver.Clients
             get { return _client.Path; }
         }
 
-        public int Timeout { get; set; }
-
-        public void BeginReceive(AsyncCallback callback)
-        {
-            _client.BeginReceive(Timeout, callback, null);
-        }
-
-        public Envelope EndReceive(IAsyncResult result)
-        {
-            BrokeredMessage message = _client.EndReceive(result);
-            return new ApiClientEnvelope(message);
-        }
-
-        public Envelope Receive()
+        public override Envelope Receive()
         {
             BrokeredMessage message = _client.Receive();
+            if (message == null)
+            {
+                return null;
+            }
             return new ApiClientEnvelope(message);
         }
 

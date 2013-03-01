@@ -43,10 +43,10 @@ namespace Letterbox.Receiver.Subscriptions
             {
                 envelope = _client.EndReceive(result);
 
-                OnEnvelopeReceived(envelope);
-
                 if (envelope != null)
                 {
+                    OnEnvelopeReceived(envelope);
+
                     T message = envelope.GetMessage<T>();
                     _consumer.Consume(message);
 

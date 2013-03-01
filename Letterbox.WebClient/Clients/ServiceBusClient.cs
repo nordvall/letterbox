@@ -12,7 +12,7 @@ using Letterbox.WebClient.Web;
 
 namespace Letterbox.WebClient.Clients
 {
-    public class ServiceBusClient : ISendReceiveClient
+    public class ServiceBusClient : ReceiveClientBase, ISendReceiveClient
     {
         private Uri _address;
         private ITokenManager _tokenManager;
@@ -23,8 +23,6 @@ namespace Letterbox.WebClient.Clients
             _address = address;
             _tokenManager = tokenManager;
             _webClient = new WebClientWrapper();
-
-            Timeout = 15;
         }
 
         public ServiceBusClient(Uri address, ITokenManager tokenManager, IWebClient webClient)
@@ -38,28 +36,16 @@ namespace Letterbox.WebClient.Clients
 
         public void Send(object message)
         {
+            var url = new Uri(_address, string.Format("{0}/messages", _address.AbsolutePath));
             byte[] data = SerializeMessage(message);
-            HttpWebRequest request = CreateWebRequest(_address, data);
+            HttpWebRequest request = CreateWebRequest(url, data);
             _webClient.SendRequest(request);
         }
 
-        public void BeginReceive(AsyncCallback callback)
+        public override Envelope Receive()
         {
-            HttpWebRequest request = CreateReceiveRequest();
-            _webClient.BeginSendRequest(request, callback);
-        }
-
-        public Envelope EndReceive(IAsyncResult result)
-        {
-            HttpWebResponse response = _webClient.EndSendRequest(result);
-            Envelope envelope = new WebClientEnvelope(response);
-            return envelope;
-        }
-
-        public Envelope Receive()
-        {
-            HttpWebRequest request = CreateReceiveRequest();
-
+            var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
+            HttpWebRequest request = CreateWebRequest(url, new byte[0]);
             HttpWebResponse response = _webClient.SendRequest(request);
             if (response.StatusCode == HttpStatusCode.Created)
             {
@@ -69,12 +55,19 @@ namespace Letterbox.WebClient.Clients
             return null;
         }
 
-        private HttpWebRequest CreateReceiveRequest()
-        {
-            var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
-            HttpWebRequest request = CreateWebRequest(url, new byte[0]);
-            return request;
-        }
+        //private HttpWebRequest CreateSendRequest(byte[] data)
+        //{
+        //    var url = new Uri(_address, string.Format("{0}/messages", _address.AbsolutePath));
+        //    HttpWebRequest request = CreateWebRequest(url, data);
+        //    return request;
+        //}
+
+        //private HttpWebRequest CreateReceiveRequest()
+        //{
+        //    var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
+        //    HttpWebRequest request = CreateWebRequest(url, new byte[0]);
+        //    return request;
+        //}
 
         public void DeadLetter(Guid lockTooken)
         {
@@ -93,12 +86,15 @@ namespace Letterbox.WebClient.Clients
 
         public void Complete(Guid lockTooken)
         {
-            throw new NotImplementedException();
+            var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
+            HttpWebRequest request = CreateWebRequest(url, new byte[0]);
+            HttpWebResponse response = _webClient.SendRequest(request);
+            
         }
 
         public void Close()
         {
-            throw new NotImplementedException();
+
         }
 
         public string Name
