@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Letterbox.Clients;
-using Letterbox.Receiver.Clients;
 using Letterbox.WebClient.Tokens;
 using Letterbox.WebClient.Web;
 

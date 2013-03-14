@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Letterbox.Clients;
-using Letterbox.Common;
-using Letterbox.Receiver.Clients;
+using Letterbox.Subscriptions;
 
-namespace Letterbox.Receiver.Subscriptions
+namespace Letterbox.ServiceBus
 {
     /// <summary>
     /// Uses an IClient to poll for messages for one specific queue/topic. 

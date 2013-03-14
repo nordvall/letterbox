@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Letterbox.Common;
 
-namespace Letterbox.Common.Subscriptions
+namespace Letterbox.Subscriptions
 {
     public class QueueSubscription<T>
     {

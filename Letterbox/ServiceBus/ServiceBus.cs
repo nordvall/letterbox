@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Letterbox.Clients;
-using Letterbox.Common;
-using Letterbox.Common.Subscriptions;
-using Letterbox.Receiver.Clients;
-using Letterbox.Receiver.Subscriptions;
+using Letterbox.Subscriptions;
 
-namespace Letterbox.Receiver
+namespace Letterbox.ServiceBus
 {
     /// <summary>
     /// Manages all subscribers

@@ -4,8 +4,6 @@ using System.Linq;
 using System.Text;
 using Letterbox.ApiClient.Clients;
 using Letterbox.Clients;
-using Letterbox.Common;
-using Letterbox.Common.Subscriptions;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 

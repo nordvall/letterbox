@@ -1,8 +1,7 @@
 ﻿using System;
 using Letterbox.Clients;
-using Letterbox.Common.Subscriptions;
 
-namespace Letterbox.Receiver.Clients
+namespace Letterbox.Clients
 {
     public interface IClientFactory
     {
