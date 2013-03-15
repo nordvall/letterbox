@@ -12,5 +12,10 @@ namespace Letterbox.Clients
         public string MessageId { get; protected set; }
         public long Size { get; protected set; }
         public abstract T GetMessage<T>() where T : class, new();
+
+        public abstract void DeadLetter();
+        public abstract void Defer();
+        public abstract void Abandon();
+        public abstract void Complete();
     }
 }

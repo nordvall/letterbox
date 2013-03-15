@@ -5,9 +5,9 @@ using System.Text;
 
 namespace Letterbox.Subscriptions
 {
-    public class QueueSubscription<T>
+    public class QueueSubscription
     {
         public string QueueName { get; set; }
-        public IConsumer<T> Consumer { get; set; }
+        public IConsumer Consumer { get; set; }
     }
 }

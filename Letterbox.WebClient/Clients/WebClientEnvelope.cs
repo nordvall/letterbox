@@ -14,12 +14,18 @@ namespace Letterbox.WebClient.Clients
     {
         private HttpWebResponse _response;
         private string _properties;
+        private ServiceBusClient _client;
 
-        public WebClientEnvelope(HttpWebResponse response)
+        public WebClientEnvelope(HttpWebResponse response, ServiceBusClient client)
         {
             _response = response;
             _properties = response.Headers["BrokerProperties"];
+            _client = client;
+
+            MessageUri = new Uri(response.Headers["Location"]);
         }
+
+        public Uri MessageUri { get; set; }
 
         public override T GetMessage<T>() 
         {
@@ -32,6 +38,38 @@ namespace Letterbox.WebClient.Clients
                 T message = serializer.ReadObject(reader, false) as T;
                 return message;
             }
+        }
+
+        public override void DeadLetter()
+        {
+            UnlockMessage();
+        }
+
+        public override void Defer()
+        {
+            UnlockMessage();
+        }
+
+        public override void Abandon()
+        {
+            UnlockMessage();
+        }
+
+        private void UnlockMessage()
+        {
+            HttpWebRequest request = _client.CreateWebRequest("PUT", MessageUri);
+            using (_client.GetResponse(request)) { };
+        }
+
+        public override void Complete()
+        {
+            DeleteMessage();
+        }
+
+        private void DeleteMessage()
+        {
+            HttpWebRequest request = _client.CreateWebRequest("DELETE", MessageUri);
+            using (_client.GetResponse(request)) { };
         }
     }
 }

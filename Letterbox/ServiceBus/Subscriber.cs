@@ -12,12 +12,12 @@ namespace Letterbox.ServiceBus
     /// Calls IConsumer for each message received.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    internal class Subscriber<T> : ISubscriber where T : class, new()
+    internal class Subscriber : ISubscriber
     {
-        private IConsumer<T> _consumer;
+        private IConsumer _consumer;
         private IReceiveClient _client;
 
-        public Subscriber(IReceiveClient client, IConsumer<T> consumer)
+        public Subscriber(IReceiveClient client, IConsumer consumer)
         {
             _consumer = consumer;
             _client = client;
@@ -46,8 +46,7 @@ namespace Letterbox.ServiceBus
                 {
                     OnEnvelopeReceived(envelope);
 
-                    T message = envelope.GetMessage<T>();
-                    _consumer.Consume(message);
+                    _consumer.ConsumeEnvelope(envelope);
 
                     _client.Complete(envelope.LockToken);
 

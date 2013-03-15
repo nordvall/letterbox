@@ -5,21 +5,10 @@ using System.Text;
 
 namespace Letterbox.Subscriptions
 {
-    public class TopicSubscription<T>
+    public class TopicSubscription
     {
-        public TopicSubscription()
-        {
-
-        }
-        public TopicSubscription(string topicName, string subscriptionName, IConsumer<T> consumer)
-        {
-            TopicName = topicName;
-            SubscriptionName = subscriptionName;
-            Consumer = consumer;
-        }
-
         public string TopicName { get; set; }
         public string SubscriptionName { get; set; }
-        public IConsumer<T> Consumer { get; set; }
+        public IConsumer Consumer { get; set; }   
     }
 }

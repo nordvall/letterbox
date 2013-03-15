@@ -21,21 +21,21 @@ namespace Letterbox.ServiceBus
             _clientFactory = clientFactory;
         }
 
-        public void Configure<T>(QueueSubscription<T> subscription) where T : class, new()
+        public void Configure(QueueSubscription subscription) 
         {
             IReceiveClient client = _clientFactory.CreateQueueClient(subscription.QueueName);
-            CreateAndConfigureSubscriber<T>(client, subscription.Consumer);
+            CreateAndConfigureSubscriber(client, subscription.Consumer);
         }
 
-        public void Configure<T>(TopicSubscription<T> subscription) where T : class, new()
+        public void Configure(TopicSubscription subscription)
         {
             IReceiveClient client = _clientFactory.CreateSubscriptionClient(subscription.TopicName, subscription.SubscriptionName);
-            CreateAndConfigureSubscriber<T>(client, subscription.Consumer);
+            CreateAndConfigureSubscriber(client, subscription.Consumer);
         }
 
-        private void CreateAndConfigureSubscriber<T>(IReceiveClient client, IConsumer<T> consumer) where T : class, new()
+        private void CreateAndConfigureSubscriber(IReceiveClient client, IConsumer consumer)
         {
-            ISubscriber subscriber = new Subscriber<T>(client, consumer);
+            ISubscriber subscriber = new Subscriber(client, consumer);
             
             subscriber.EnvelopeReceived += OnMessageReceived;
             subscriber.EnvelopeFailed += OnMessageFailed;

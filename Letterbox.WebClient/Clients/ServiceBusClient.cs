@@ -38,36 +38,22 @@ namespace Letterbox.WebClient.Clients
         {
             var url = new Uri(_address, string.Format("{0}/messages", _address.AbsolutePath));
             byte[] data = SerializeMessage(message);
-            HttpWebRequest request = CreateWebRequest(url, data);
+            HttpWebRequest request = CreateWebRequest("POST", url, data);
             _webClient.SendRequest(request);
         }
 
         public override Envelope Receive()
         {
             var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
-            HttpWebRequest request = CreateWebRequest(url, new byte[0]);
+            HttpWebRequest request = CreateWebRequest("POST", url, new byte[0]);
             HttpWebResponse response = _webClient.SendRequest(request);
             if (response.StatusCode == HttpStatusCode.Created)
             {
-                Envelope envelope = new WebClientEnvelope(response);
+                Envelope envelope = new WebClientEnvelope(response, this);
                 return envelope;
             }
             return null;
         }
-
-        //private HttpWebRequest CreateSendRequest(byte[] data)
-        //{
-        //    var url = new Uri(_address, string.Format("{0}/messages", _address.AbsolutePath));
-        //    HttpWebRequest request = CreateWebRequest(url, data);
-        //    return request;
-        //}
-
-        //private HttpWebRequest CreateReceiveRequest()
-        //{
-        //    var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
-        //    HttpWebRequest request = CreateWebRequest(url, new byte[0]);
-        //    return request;
-        //}
 
         public void DeadLetter(Guid lockTooken)
         {
@@ -87,8 +73,11 @@ namespace Letterbox.WebClient.Clients
         public void Complete(Guid lockTooken)
         {
             var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
-            HttpWebRequest request = CreateWebRequest(url, new byte[0]);
-            HttpWebResponse response = _webClient.SendRequest(request);
+            HttpWebRequest request = CreateWebRequest("DELETE", url);
+            using (HttpWebResponse response = _webClient.SendRequest(request))
+            { 
+            
+            }
             
         }
 
@@ -102,25 +91,34 @@ namespace Letterbox.WebClient.Clients
             get { throw new NotImplementedException(); }
         }
 
-        protected HttpWebRequest CreateWebRequest(Uri requestUri, byte[] data)
+        public HttpWebResponse GetResponse(HttpWebRequest request)
+        {
+            return _webClient.SendRequest(request);
+        }
+
+        public HttpWebRequest CreateWebRequest(string httpMethod, Uri requestUri)
         {
             HttpWebRequest request = WebRequest.Create(requestUri) as HttpWebRequest;
             request.AllowAutoRedirect = true;
             request.MaximumAutomaticRedirections = 1;
-            request.Method = "POST";
+            request.Method = httpMethod;
             request.ContentType = "application/atom+xml;type=entry;charset=utf-8";
-            request.ContentLength = data.Length;
-
+            
             AccessToken token = _tokenManager.GetAccessToken();
             string tokenHeaderValue = string.Format("WRAP access_token=\"{0}\"", token.TokenValue);
             request.Headers.Add(HttpRequestHeader.Authorization, tokenHeaderValue);
 
-            if (data.Length > 0)
+            return request;
+        }
+
+        protected HttpWebRequest CreateWebRequest(string httpMethod, Uri requestUri, byte[] data)
+        {
+            HttpWebRequest request = CreateWebRequest(httpMethod, requestUri);
+            request.ContentLength = data.Length;
+
+            using (Stream requestStream = request.GetRequestStream())
             {
-                using (Stream requestStream = request.GetRequestStream())
-                {
-                    requestStream.Write(data, 0, data.Length);
-                }
+                requestStream.Write(data, 0, data.Length);
             }
 
             return request;
@@ -137,13 +135,6 @@ namespace Letterbox.WebClient.Clients
             writer.Flush();
 
             return stream.ToArray();
-        }
-
-
-        public int Timeout
-        {
-            get;
-            set;
         }
     }
 }

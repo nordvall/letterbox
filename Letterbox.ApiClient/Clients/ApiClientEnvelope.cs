@@ -25,5 +25,25 @@ namespace Letterbox.ApiClient.Clients
         {
             return _message.GetBody<T>();
         }
+
+        public override void DeadLetter()
+        {
+            _message.DeadLetter();
+        }
+
+        public override void Defer()
+        {
+            _message.Defer();
+        }
+
+        public override void Abandon()
+        {
+            _message.Abandon();
+        }
+
+        public override void Complete()
+        {
+            _message.Complete();
+        }
     }
 }
