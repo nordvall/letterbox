@@ -48,7 +48,7 @@ namespace Letterbox.ServiceBus
 
                     _consumer.ConsumeEnvelope(envelope);
 
-                    _client.Complete(envelope.LockToken);
+                    envelope.Complete();
 
                     OnEnvelopeConsumed(envelope);
                 }
@@ -57,7 +57,7 @@ namespace Letterbox.ServiceBus
             {
                 if (envelope != null)
                 {
-                    _client.DeadLetter(envelope.LockToken);
+                    envelope.DeadLetter();
                     //message.Abandon();
                 }
 
@@ -111,7 +111,6 @@ namespace Letterbox.ServiceBus
             if (envelope != null)
             {
                 args.MessageId = envelope.MessageId;
-                args.Size = envelope.Size;
                 args.EnquedTime = envelope.EnqueuedTimeUtc;
             }
 
