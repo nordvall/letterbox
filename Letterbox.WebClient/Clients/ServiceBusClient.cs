@@ -46,11 +46,13 @@ namespace Letterbox.WebClient.Clients
         {
             var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
             HttpWebRequest request = CreateWebRequest("POST", url, new byte[0]);
-            HttpWebResponse response = _webClient.SendRequest(request);
-            if (response.StatusCode == HttpStatusCode.Created)
+            using (HttpWebResponse response = _webClient.SendRequest(request))
             {
-                Envelope envelope = new WebClientEnvelope(response, this);
-                return envelope;
+                if (response.StatusCode == HttpStatusCode.Created)
+                {
+                    Envelope envelope = new WebClientEnvelope(response, this);
+                    return envelope;
+                }
             }
             return null;
         }

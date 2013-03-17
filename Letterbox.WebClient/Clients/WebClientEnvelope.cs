@@ -15,6 +15,8 @@ namespace Letterbox.WebClient.Clients
         private HttpWebResponse _response;
         private string _properties;
         private ServiceBusClient _client;
+        private Stream _messageStream;
+        private Uri _messageUri { get; set; }
 
         public WebClientEnvelope(HttpWebResponse response, ServiceBusClient client)
         {
@@ -22,19 +24,36 @@ namespace Letterbox.WebClient.Clients
             _properties = response.Headers["BrokerProperties"];
             _client = client;
 
-            MessageUri = new Uri(response.Headers["Location"]);
+            _messageUri = new Uri(response.Headers["Location"]);
+
+            CopyMessageContents(response);
         }
 
-        public Uri MessageUri { get; set; }
+        
+        private void CopyMessageContents(HttpWebResponse response)
+        {
+            using (Stream responseStream = response.GetResponseStream())
+            {
+                _messageStream = new MemoryStream();
+                int count = 0;
+
+                do
+                {
+                    byte[] buffer = new byte[1024];
+                    count = responseStream.Read(buffer, 0, 1024);
+                    _messageStream.Write(buffer, 0, count);
+                } while (responseStream.CanRead && count > 0);
+            }
+        }
 
         public override T GetMessage<T>() 
         {
             var serializer = new DataContractSerializer(typeof(T));
+            _messageStream.Position = 0;
 
-            using (Stream stream = _response.GetResponseStream())
+            var quotas = new XmlDictionaryReaderQuotas();
+            using (var reader = XmlDictionaryReader.CreateBinaryReader(_messageStream, quotas))
             {
-                var quotas = new XmlDictionaryReaderQuotas();
-                var reader = XmlDictionaryReader.CreateBinaryReader(stream, quotas);
                 T message = serializer.ReadObject(reader, false) as T;
                 return message;
             }
@@ -57,7 +76,7 @@ namespace Letterbox.WebClient.Clients
 
         private void UnlockMessage()
         {
-            HttpWebRequest request = _client.CreateWebRequest("PUT", MessageUri);
+            HttpWebRequest request = _client.CreateWebRequest("PUT", _messageUri);
             using (_client.GetResponse(request)) { };
         }
 
@@ -68,7 +87,7 @@ namespace Letterbox.WebClient.Clients
 
         private void DeleteMessage()
         {
-            HttpWebRequest request = _client.CreateWebRequest("DELETE", MessageUri);
+            HttpWebRequest request = _client.CreateWebRequest("DELETE", _messageUri);
             using (_client.GetResponse(request)) { };
         }
     }
