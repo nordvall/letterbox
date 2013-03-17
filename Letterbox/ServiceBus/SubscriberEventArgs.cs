@@ -10,7 +10,6 @@ namespace Letterbox.ServiceBus
         public SubscriberEventType EventType { get; set; }
         public string MessageId { get; set; }
         public DateTime EnquedTime { get; set; }
-        public long Size { get; set; }
         public string ErrorMessage { get; set; }
 
         public enum SubscriberEventType

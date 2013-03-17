@@ -16,9 +16,7 @@ namespace Letterbox.ApiClient.Clients
             _message = message;
 
             this.EnqueuedTimeUtc = message.EnqueuedTimeUtc;
-            this.LockToken = message.LockToken;
             this.MessageId = message.MessageId;
-            this.Size = message.Size;
         }
 
         public override T GetMessage<T>()
