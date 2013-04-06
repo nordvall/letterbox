@@ -5,11 +5,11 @@ using System.Text;
 
 namespace Letterbox.WebClient.Tokens
 {
-    public class AccessToken
+    public class WebToken
     {
         private readonly DateTime baseDate = new DateTime(1970, 1, 1);
 
-        public AccessToken(string tokenValue)
+        public WebToken(string tokenValue)
         {
             TokenValue = tokenValue;
             ParseToken();

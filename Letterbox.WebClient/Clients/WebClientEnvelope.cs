@@ -21,9 +21,9 @@ namespace Letterbox.WebClient.Clients
         private Uri _messageUri { get; set; }
         private WebRequestFactory _webRequestFactory;
         private MessageSerializer _serializer;
-        private ITokenManager _tokenManager;
+        private IWebTokenProvider _tokenManager;
 
-        public WebClientEnvelope(HttpWebResponse response, IWebClient client, ITokenManager tokenManager)
+        public WebClientEnvelope(HttpWebResponse response, IWebClient client, IWebTokenProvider tokenManager)
         {
             _response = response;
             _properties = response.Headers["BrokerProperties"];

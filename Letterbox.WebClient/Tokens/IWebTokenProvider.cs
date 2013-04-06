@@ -3,8 +3,8 @@ using System.Net;
 
 namespace Letterbox.WebClient.Tokens
 {
-    public interface ITokenManager
+    public interface IWebTokenProvider
     {
-        AccessToken GetAccessToken();
+        WebToken GetAccessToken();
     }
 }

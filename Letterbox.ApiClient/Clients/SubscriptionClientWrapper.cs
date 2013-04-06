@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Letterbox.ApiClient.Clients;
 using Letterbox.Clients;
 using Microsoft.ServiceBus.Messaging;
 
-namespace Letterbox.Receiver.Clients
+namespace Letterbox.ApiClient.Clients
 {
     public class SubscriptionClientWrapper : IReceiveClient
     {

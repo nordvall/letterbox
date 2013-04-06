@@ -15,16 +15,16 @@ namespace Letterbox.WebClient.Clients
     public class ServiceBusClient : ISendReceiveClient
     {
         private Uri _address;
-        private ITokenManager _tokenManager;
+        private IWebTokenProvider _tokenManager;
         private IWebClient _webClient;
         private WebRequestFactory _webRequestFactory;
         private MessageSerializer _serializer;
 
-        public ServiceBusClient(Uri address, ITokenManager tokenManager)
+        public ServiceBusClient(Uri address, IWebTokenProvider tokenManager)
             : this(address, tokenManager, new WebClientWrapper())
         { }
 
-        public ServiceBusClient(Uri address, ITokenManager tokenManager, IWebClient webClient)
+        public ServiceBusClient(Uri address, IWebTokenProvider tokenManager, IWebClient webClient)
         {
             _address = address;
             _tokenManager = tokenManager;

@@ -12,108 +12,50 @@ namespace Letterbox.WebClient.Clients
     public class WebClientFactory : IClientFactory
     {
         private Uri _serviceBusAddress;
-        private ITokenManager _tokenManager;
-        private IWebClient _webClient;
+        private IWebTokenProvider _tokenProvider;
         private WebRequestFactory _requestFactory;
+        private UriCreator _uriCreator;
+        private WebQueueValidator _queueValidator;
 
-        public WebClientFactory(Uri serviceBusAddress, ITokenManager tokenManager)
-            : this(serviceBusAddress, tokenManager, new WebClientWrapper())
+        public WebClientFactory(Uri serviceBusAddress)
+            : this(serviceBusAddress, null)
         { }
 
-        public WebClientFactory(Uri serviceBusAddress, ITokenManager tokenManager, IWebClient webClient)
+        public WebClientFactory(Uri serviceBusAddress, NetworkCredential credential)
         {
             _serviceBusAddress = serviceBusAddress;
-            _tokenManager = tokenManager;
-            _webClient = webClient;
-            _requestFactory = new WebRequestFactory(tokenManager);
+            _tokenProvider = new WebTokenProvider(serviceBusAddress, credential);
+            _requestFactory = new WebRequestFactory(_tokenProvider);
+            _uriCreator = new UriCreator(serviceBusAddress);
+            _queueValidator = new WebQueueValidator(serviceBusAddress, _tokenProvider);
         }
 
         public ISendReceiveClient CreateQueueClient(string queueName)
         {
-            var url = GenerateQueueUri(queueName);
-            VerifyServiceBusObject(url);
-
-            var client = new ServiceBusClient(url, _tokenManager);
+            var url = _uriCreator.GenerateQueueUri(queueName);
+            _queueValidator.EnsureQueue(url);
+            var client = new ServiceBusClient(url, _tokenProvider);
 
             return client;
         }
 
-        private Uri GenerateQueueUri(string queueName)
-        {
-            var url = new Uri(_serviceBusAddress, string.Format("{0}/{1}", _serviceBusAddress.AbsolutePath, queueName));
-            return url;
-        }
-
         public ISendClient CreateTopicClient(string topicName)
         {
-            Uri url = GenerateTopicUri(topicName);
-            VerifyServiceBusObject(url);
+            Uri url = _uriCreator.GenerateTopicUri(topicName);
+            _queueValidator.EnsureTopic(url);
 
-            return new ServiceBusClient(url, _tokenManager);
+            return new ServiceBusClient(url, _tokenProvider);
         }
 
         public IReceiveClient CreateSubscriptionClient(string topicName, string subscriptionName)
         {
-            var topicUrl = GenerateTopicUri(topicName);
-            VerifyServiceBusObject(topicUrl);
+            Uri topicUrl = _uriCreator.GenerateTopicUri(topicName);
+            _queueValidator.EnsureTopic(topicUrl);
 
-            var subscriptionUrl = GenerateSubscriptionUri(topicName, subscriptionName);
-            EnsureSubscription(subscriptionUrl);
-
-            return new ServiceBusClient(subscriptionUrl, _tokenManager);
-        }
-
-        private Uri GenerateSubscriptionUri(string topicName, string subscriptionName)
-        {
-            var url = new Uri(_serviceBusAddress, string.Format("{0}/{1}/Subscriptions/{2}", _serviceBusAddress.AbsolutePath, topicName, subscriptionName));
-            return url;
-        }
-
-        private void VerifyServiceBusObject(Uri objectUri)
-        {
-            HttpWebRequest request = _requestFactory.CreateWebRequest("GET", objectUri);
+            Uri subscriptionUrl = _uriCreator.GenerateSubscriptionUri(topicName, subscriptionName);
+            _queueValidator.EnsureSubscription(subscriptionUrl);
             
-            using (HttpWebResponse repsonse = _webClient.SendRequest(request))
-            {
-                if (repsonse.StatusCode != HttpStatusCode.OK)
-                {
-                    switch (repsonse.StatusCode)
-                    {
-                        case HttpStatusCode.Unauthorized:
-                            throw new UnauthorizedAccessException(string.Format("Access denied to: {0}", objectUri));
-                        case HttpStatusCode.NotFound:
-                            throw new ArgumentOutOfRangeException(string.Format("Service bus object does not exist: {0}", objectUri));
-                        default:
-                            throw new Exception(string.Format("Error verifying service bus object: {0}", objectUri));
-                    }
-                }
-            }
-        }
-
-        private void EnsureSubscription(Uri subscriptionUri)
-        {
-            try 
-            {
-                VerifyServiceBusObject(subscriptionUri);
-            }
-            catch(ArgumentOutOfRangeException)
-            {
-                HttpWebRequest request = _requestFactory.CreateWebRequest("PUT", subscriptionUri);
-                
-                using (HttpWebResponse repsonse = _webClient.SendRequest(request))
-                {
-                    if (repsonse.StatusCode != HttpStatusCode.Created)
-                    {
-                        throw new Exception(string.Format("Error verifying service bus object: {0}", subscriptionUri));
-                    }
-                }
-            }
-        }
-        
-        private Uri GenerateTopicUri(string topicName)
-        {
-            var url = new Uri(_serviceBusAddress, string.Format("{0}/{1}", _serviceBusAddress.AbsolutePath, topicName));
-            return url;
+            return new ServiceBusClient(subscriptionUrl, _tokenProvider);
         }
     }
 }

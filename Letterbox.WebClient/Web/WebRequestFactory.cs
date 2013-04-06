@@ -10,9 +10,9 @@ namespace Letterbox.WebClient.Web
 {
     public class WebRequestFactory
     {
-        private ITokenManager _tokenManager;
+        private IWebTokenProvider _tokenManager;
 
-        public WebRequestFactory(ITokenManager tokenManager)
+        public WebRequestFactory(IWebTokenProvider tokenManager)
         {
             _tokenManager = tokenManager;
         }
@@ -62,7 +62,7 @@ namespace Letterbox.WebClient.Web
 
         private void InsertAccessToken(HttpWebRequest request)
         {
-            AccessToken token = _tokenManager.GetAccessToken();
+            WebToken token = _tokenManager.GetAccessToken();
             string tokenHeaderValue = string.Format("WRAP access_token=\"{0}\"", token.TokenValue);
             request.Headers.Add(HttpRequestHeader.Authorization, tokenHeaderValue);
         }
