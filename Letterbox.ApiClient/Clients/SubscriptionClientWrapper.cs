@@ -8,21 +8,30 @@ using Microsoft.ServiceBus.Messaging;
 
 namespace Letterbox.Receiver.Clients
 {
-    public class SubscriptionClientWrapper : ReceiveClientBase, IReceiveClient
+    public class SubscriptionClientWrapper : IReceiveClient
     {
         SubscriptionClient _client;
 
         public SubscriptionClientWrapper(SubscriptionClient client)
         {
             _client = client;
+            Timeout = 15;
         }
+
+        public ushort Timeout { get; set; }
 
         public string Name 
         { 
             get { return _client.Name; } 
         }
 
-        public override Envelope Receive()
+        public IAsyncResult BeginReceive(AsyncCallback callback)
+        {
+            Func<Envelope> receiveMethod = Receive;
+            return receiveMethod.BeginInvoke(callback, receiveMethod);
+        }
+
+        public Envelope Receive()
         {
             BrokeredMessage message = _client.Receive(new TimeSpan(0, 0, Timeout));
             if (message == null)
@@ -30,6 +39,12 @@ namespace Letterbox.Receiver.Clients
                 return null;
             }
             return new ApiClientEnvelope(message);
+        }
+
+        public Envelope EndReceive(IAsyncResult result)
+        {
+            Func<Envelope> receiveMethod = result.AsyncState as Func<Envelope>;
+            return receiveMethod.EndInvoke(result);
         }
 
         public void DeadLetter(Guid lockToken)

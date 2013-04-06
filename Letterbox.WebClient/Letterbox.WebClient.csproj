@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Clients\MessageSerializer.cs" />
     <Compile Include="Clients\ServiceBusClient.cs" />
     <Compile Include="Clients\WebClientEnvelope.cs" />
     <Compile Include="Clients\WebClientFactory.cs" />
@@ -56,6 +57,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tokens\TokenManager.cs" />
     <Compile Include="Web\WebClientWrapper.cs" />
+    <Compile Include="Web\WebRequestFactory.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Letterbox\Letterbox.csproj">

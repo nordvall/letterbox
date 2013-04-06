@@ -49,7 +49,7 @@
     <Compile Include="Clients\IClientFactory.cs" />
     <Compile Include="Clients\ISendClient.cs" />
     <Compile Include="Clients\ISendReceiveClient.cs" />
-    <Compile Include="Clients\ReceiveClientBase.cs" />
+    <Compile Include="ServiceBus\Sender.cs" />
     <Compile Include="ServiceBus\ServiceBus.cs" />
     <Compile Include="Subscriptions\Consumer.cs" />
     <Compile Include="Subscriptions\IConsumer.cs" />

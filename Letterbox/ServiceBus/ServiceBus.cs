@@ -44,6 +44,20 @@ namespace Letterbox.ServiceBus
             _subscribers.Add(subscriber);
         }
 
+        public void Send(string queueName, object message)
+        {
+            ISendClient client = _clientFactory.CreateQueueClient(queueName);
+            var sender = new Sender(client, message);
+            sender.Send();
+        }
+
+        public void Publish(string topicName, object message)
+        {
+            ISendClient client = _clientFactory.CreateTopicClient(topicName);
+            var sender = new Sender(client, message);
+            sender.Send();
+        }
+
         public void Start()
         {
             foreach (ISubscriber subscriber in _subscribers)

@@ -12,6 +12,6 @@ namespace Letterbox.Clients
         Envelope Receive();
         void Close();
         string Name { get; }
-        int Timeout { get; set; }
+        ushort Timeout { get; set; }
     }
 }

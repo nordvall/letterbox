@@ -7,6 +7,8 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using Letterbox.Clients;
+using Letterbox.WebClient.Tokens;
+using Letterbox.WebClient.Web;
 
 namespace Letterbox.WebClient.Clients
 {
@@ -14,15 +16,19 @@ namespace Letterbox.WebClient.Clients
     {
         private HttpWebResponse _response;
         private string _properties;
-        private ServiceBusClient _client;
+        private IWebClient _client;
         private Stream _messageStream;
         private Uri _messageUri { get; set; }
+        private WebRequestFactory _webRequestFactory;
+        private MessageSerializer _serializer;
 
-        public WebClientEnvelope(HttpWebResponse response, ServiceBusClient client)
+        public WebClientEnvelope(HttpWebResponse response, IWebClient client, ITokenManager tokenManager)
         {
             _response = response;
             _properties = response.Headers["BrokerProperties"];
             _client = client;
+            _webRequestFactory = new WebRequestFactory(tokenManager);
+            _serializer = new MessageSerializer();
 
             _messageUri = new Uri(response.Headers["Location"]);
 
@@ -48,15 +54,8 @@ namespace Letterbox.WebClient.Clients
 
         public override T GetMessage<T>() 
         {
-            var serializer = new DataContractSerializer(typeof(T));
-            _messageStream.Position = 0;
-
-            var quotas = new XmlDictionaryReaderQuotas();
-            using (var reader = XmlDictionaryReader.CreateBinaryReader(_messageStream, quotas))
-            {
-                T message = serializer.ReadObject(reader, false) as T;
-                return message;
-            }
+            T message = _serializer.DeserializeMessage<T>(_messageStream);
+            return message;
         }
 
         public override void DeadLetter()
@@ -76,8 +75,8 @@ namespace Letterbox.WebClient.Clients
 
         private void UnlockMessage()
         {
-            HttpWebRequest request = _client.CreateWebRequest("PUT", _messageUri);
-            using (_client.GetResponse(request)) { };
+            HttpWebRequest request = _webRequestFactory.CreateWebRequest("PUT", _messageUri);
+            SendWebRequest(request);
         }
 
         public override void Complete()
@@ -87,8 +86,27 @@ namespace Letterbox.WebClient.Clients
 
         private void DeleteMessage()
         {
-            HttpWebRequest request = _client.CreateWebRequest("DELETE", _messageUri);
-            using (_client.GetResponse(request)) { };
+            HttpWebRequest request = _webRequestFactory.CreateWebRequest("DELETE", _messageUri);
+            SendWebRequest(request);
+        }
+
+        private void SendWebRequest(HttpWebRequest request)
+        {
+            HttpWebResponse response = null;
+
+            try
+            {
+                response = _client.SendRequest(request);
+            }
+            catch (Exception)
+            {
+                // TODO: Translate exceptions.
+                throw;
+            }
+            finally
+            {
+                // TODO: Something to dispose?
+            }
         }
     }
 }

@@ -21,10 +21,22 @@ namespace Letterbox.ApiClient.Clients
             get { return _client.Path; }
         }
 
+        public IAsyncResult BeginSend(object message, AsyncCallback callback)
+        {
+            Action<object> sendMethod = Send;
+            return sendMethod.BeginInvoke(message, callback, sendMethod);
+        }
+
         public void Send(object message)
         {
             var nativeMessage = new BrokeredMessage(message);
             _client.Send(nativeMessage);
+        }
+
+        public void EndSend(IAsyncResult result)
+        {
+            Action<object> sendMethod = result.AsyncState as Action<object>;
+            sendMethod.EndInvoke(result);
         }
     }
 }

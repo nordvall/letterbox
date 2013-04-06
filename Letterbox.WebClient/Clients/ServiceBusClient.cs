@@ -12,49 +12,74 @@ using Letterbox.WebClient.Web;
 
 namespace Letterbox.WebClient.Clients
 {
-    public class ServiceBusClient : ReceiveClientBase, ISendReceiveClient
+    public class ServiceBusClient : ISendReceiveClient
     {
         private Uri _address;
         private ITokenManager _tokenManager;
         private IWebClient _webClient;
+        private WebRequestFactory _webRequestFactory;
+        private MessageSerializer _serializer;
 
         public ServiceBusClient(Uri address, ITokenManager tokenManager)
-        {
-            _address = address;
-            _tokenManager = tokenManager;
-            _webClient = new WebClientWrapper();
-        }
+            : this(address, tokenManager, new WebClientWrapper())
+        { }
 
         public ServiceBusClient(Uri address, ITokenManager tokenManager, IWebClient webClient)
         {
             _address = address;
             _tokenManager = tokenManager;
             _webClient = webClient;
+            _webRequestFactory = new WebRequestFactory(tokenManager);
+            _serializer = new MessageSerializer();
+        }
 
-            Timeout = 15;
+        public ushort Timeout { get; set; }
+
+        public IAsyncResult BeginSend(object message, AsyncCallback callback)
+        {
+            Action<object> sendMethod = Send;
+            return sendMethod.BeginInvoke(message, callback, sendMethod);
         }
 
         public void Send(object message)
         {
             var url = new Uri(_address, string.Format("{0}/messages", _address.AbsolutePath));
-            byte[] data = SerializeMessage(message);
-            HttpWebRequest request = CreateWebRequest("POST", url, data);
+            byte[] data = _serializer.SerializeMessage(message);
+            HttpWebRequest request = _webRequestFactory.CreateWebRequest("POST", url, data);
             _webClient.SendRequest(request);
         }
 
-        public override Envelope Receive()
+        public void EndSend(IAsyncResult result)
+        {
+            Action<object> sendMethod = result.AsyncState as Action<object>;
+            sendMethod.EndInvoke(result);
+        }
+
+        public IAsyncResult BeginReceive(AsyncCallback callback)
+        {
+            Func<Envelope> receiveMethod = Receive;
+            return receiveMethod.BeginInvoke(callback, receiveMethod);
+        }
+
+        public Envelope Receive()
         {
             var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
-            HttpWebRequest request = CreateWebRequest("POST", url, new byte[0]);
+            HttpWebRequest request = _webRequestFactory.CreateWebRequest("POST", url, new byte[0]);
             using (HttpWebResponse response = _webClient.SendRequest(request))
             {
                 if (response.StatusCode == HttpStatusCode.Created)
                 {
-                    Envelope envelope = new WebClientEnvelope(response, this);
+                    Envelope envelope = new WebClientEnvelope(response, _webClient, _tokenManager);
                     return envelope;
                 }
             }
             return null;
+        }
+
+        public Envelope EndReceive(IAsyncResult result)
+        {
+            Func<Envelope> receiveMethod = result.AsyncState as Func<Envelope>;
+            return receiveMethod.EndInvoke(result);
         }
 
         public void DeadLetter(Guid lockTooken)
@@ -75,7 +100,7 @@ namespace Letterbox.WebClient.Clients
         public void Complete(Guid lockTooken)
         {
             var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
-            HttpWebRequest request = CreateWebRequest("DELETE", url);
+            HttpWebRequest request = _webRequestFactory.CreateWebRequest("DELETE", url);
             using (HttpWebResponse response = _webClient.SendRequest(request))
             { 
             
@@ -91,52 +116,6 @@ namespace Letterbox.WebClient.Clients
         public string Name
         {
             get { throw new NotImplementedException(); }
-        }
-
-        public HttpWebResponse GetResponse(HttpWebRequest request)
-        {
-            return _webClient.SendRequest(request);
-        }
-
-        public HttpWebRequest CreateWebRequest(string httpMethod, Uri requestUri)
-        {
-            HttpWebRequest request = WebRequest.Create(requestUri) as HttpWebRequest;
-            request.AllowAutoRedirect = true;
-            request.MaximumAutomaticRedirections = 1;
-            request.Method = httpMethod;
-            request.ContentType = "application/atom+xml;type=entry;charset=utf-8";
-            
-            AccessToken token = _tokenManager.GetAccessToken();
-            string tokenHeaderValue = string.Format("WRAP access_token=\"{0}\"", token.TokenValue);
-            request.Headers.Add(HttpRequestHeader.Authorization, tokenHeaderValue);
-
-            return request;
-        }
-
-        protected HttpWebRequest CreateWebRequest(string httpMethod, Uri requestUri, byte[] data)
-        {
-            HttpWebRequest request = CreateWebRequest(httpMethod, requestUri);
-            request.ContentLength = data.Length;
-
-            using (Stream requestStream = request.GetRequestStream())
-            {
-                requestStream.Write(data, 0, data.Length);
-            }
-
-            return request;
-        }
-
-        protected byte[] SerializeMessage(object message)
-        {
-            MemoryStream stream = new MemoryStream();
-
-            var serializer = new DataContractSerializer(message.GetType());
-
-            var writer = XmlDictionaryWriter.CreateBinaryWriter(stream);
-            serializer.WriteObject(writer, message);
-            writer.Flush();
-
-            return stream.ToArray();
         }
     }
 }
