@@ -14,19 +14,18 @@ namespace Letterbox.WebClient.Clients
         private Uri _serviceBusAddress;
         private ITokenManager _tokenManager;
         private IWebClient _webClient;
+        private WebRequestFactory _requestFactory;
 
         public WebClientFactory(Uri serviceBusAddress, ITokenManager tokenManager)
-        {
-            _serviceBusAddress = serviceBusAddress;
-            _tokenManager = tokenManager;
-            _webClient = new WebClientWrapper();
-        }
+            : this(serviceBusAddress, tokenManager, new WebClientWrapper())
+        { }
 
         public WebClientFactory(Uri serviceBusAddress, ITokenManager tokenManager, IWebClient webClient)
         {
             _serviceBusAddress = serviceBusAddress;
             _tokenManager = tokenManager;
             _webClient = webClient;
+            _requestFactory = new WebRequestFactory(tokenManager);
         }
 
         public ISendReceiveClient CreateQueueClient(string queueName)
@@ -72,8 +71,8 @@ namespace Letterbox.WebClient.Clients
 
         private void VerifyServiceBusObject(Uri objectUri)
         {
-            HttpWebRequest request = CreateWebRequest("GET", objectUri);
-
+            HttpWebRequest request = _requestFactory.CreateWebRequest("GET", objectUri);
+            
             using (HttpWebResponse repsonse = _webClient.SendRequest(request))
             {
                 if (repsonse.StatusCode != HttpStatusCode.OK)
@@ -99,7 +98,8 @@ namespace Letterbox.WebClient.Clients
             }
             catch(ArgumentOutOfRangeException)
             {
-                HttpWebRequest request = CreateWebRequest("PUT", subscriptionUri);
+                HttpWebRequest request = _requestFactory.CreateWebRequest("PUT", subscriptionUri);
+                
                 using (HttpWebResponse repsonse = _webClient.SendRequest(request))
                 {
                     if (repsonse.StatusCode != HttpStatusCode.Created)
@@ -114,21 +114,6 @@ namespace Letterbox.WebClient.Clients
         {
             var url = new Uri(_serviceBusAddress, string.Format("{0}/{1}", _serviceBusAddress.AbsolutePath, topicName));
             return url;
-        }
-
-        private HttpWebRequest CreateWebRequest(string httpMethod, Uri requestUri)
-        {
-            HttpWebRequest request = WebRequest.Create(requestUri) as HttpWebRequest;
-            request.AllowAutoRedirect = true;
-            request.MaximumAutomaticRedirections = 1;
-            request.Method = httpMethod;
-            request.Timeout = 5000;
-
-            AccessToken token = _tokenManager.GetAccessToken();
-            string tokenHeaderValue = string.Format("WRAP access_token=\"{0}\"", token.TokenValue);
-            request.Headers.Add(HttpRequestHeader.Authorization, tokenHeaderValue);
-
-            return request;
         }
     }
 }

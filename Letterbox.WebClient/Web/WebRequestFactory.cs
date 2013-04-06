@@ -24,11 +24,9 @@ namespace Letterbox.WebClient.Web
             request.MaximumAutomaticRedirections = 1;
             request.Method = httpMethod;
             request.ContentType = "application/atom+xml;type=entry;charset=utf-8";
-
-            AccessToken token = _tokenManager.GetAccessToken();
-            string tokenHeaderValue = string.Format("WRAP access_token=\"{0}\"", token.TokenValue);
-            request.Headers.Add(HttpRequestHeader.Authorization, tokenHeaderValue);
-
+            
+            InsertAccessToken(request);
+            
             return request;
         }
 
@@ -43,6 +41,30 @@ namespace Letterbox.WebClient.Web
             }
 
             return request;
+        }
+
+        public HttpWebRequest CreateTokenWebRequest(string httpMethod, Uri requestUri, byte[] data)
+        {
+            HttpWebRequest request = WebRequest.Create(requestUri) as HttpWebRequest;
+            request.AllowAutoRedirect = true;
+            request.MaximumAutomaticRedirections = 1;
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.ContentLength = data.Length;
+
+            using (Stream requestStream = request.GetRequestStream())
+            {
+                requestStream.Write(data, 0, data.Length);
+            }
+
+            return request;
+        }
+
+        private void InsertAccessToken(HttpWebRequest request)
+        {
+            AccessToken token = _tokenManager.GetAccessToken();
+            string tokenHeaderValue = string.Format("WRAP access_token=\"{0}\"", token.TokenValue);
+            request.Headers.Add(HttpRequestHeader.Authorization, tokenHeaderValue);
         }
     }
 }

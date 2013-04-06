@@ -11,20 +11,20 @@ namespace Letterbox.ServiceBus
     {
         private ISendClient _client;
         private object _message;
-        private ushort _maxRetries = 5;
         private TimeSpan _waitForRetry = new TimeSpan(0, 0, 2);
+        private ushort _attempts;
 
         public Sender(ISendClient client, object message)
         {
             _client = client;
             _message = message;
+
+            MaxAttempts = 4;
         }
 
         public bool Synchronous { get; set; }
 
-        public bool MessageSent { get; private set; }
-
-        public ushort Attempts { get; private set; }
+        public ushort MaxAttempts { get; set; }
 
         public void Send()
         {
@@ -38,38 +38,31 @@ namespace Letterbox.ServiceBus
             }
         }
 
-        private void InvokeWithRetry(Action action)
-        {
-            while (Attempts <= _maxRetries)
-            {
-                try
-                {
-                    Attempts++;
-                    action.Invoke();
-                    MessageSent = true;
-                }
-                catch
-                {
-                    Thread.Sleep(_waitForRetry);
-                    _waitForRetry = _waitForRetry + _waitForRetry;
-                    Send();
-                }
-            }
-
-            if (MessageSent == false)
-            {
-                throw new Exception(string.Format("Message could not be sent in {0} retries", _maxRetries));
-            }
-        }
-
         private void HasResponse(IAsyncResult result)
         {
             InvokeWithRetry(() => _client.EndSend(result));
         }
 
-        private void Retry()
+        private void InvokeWithRetry(Action action)
         {
-            Attempts++;
+            try
+            {
+                _attempts++;
+                action.Invoke();
+            }
+            catch (Exception ex)
+            {
+                if (_attempts < MaxAttempts)
+                {
+                    Thread.Sleep(_waitForRetry);
+                    _waitForRetry = _waitForRetry + _waitForRetry;
+                    Send();
+                }
+                else
+                {
+                    throw new Exception(string.Format("Message could not be sent in {0} retries", MaxAttempts), ex);
+                }
+            }
         }
     }
 }

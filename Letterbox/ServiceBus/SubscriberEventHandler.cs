@@ -5,5 +5,5 @@ using System.Text;
 
 namespace Letterbox.ServiceBus
 {
-    public delegate void SubscriberEventHandler(SubscriberEventArgs e);
+    public delegate void SubscriberEventHandler(object sender, SubscriberEventArgs e);
 }

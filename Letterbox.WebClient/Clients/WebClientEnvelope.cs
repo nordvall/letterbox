@@ -12,7 +12,7 @@ using Letterbox.WebClient.Web;
 
 namespace Letterbox.WebClient.Clients
 {
-    public class WebClientEnvelope : Envelope
+    public class WebClientEnvelope : Envelope, IDisposable
     {
         private HttpWebResponse _response;
         private string _properties;
@@ -21,12 +21,14 @@ namespace Letterbox.WebClient.Clients
         private Uri _messageUri { get; set; }
         private WebRequestFactory _webRequestFactory;
         private MessageSerializer _serializer;
+        private ITokenManager _tokenManager;
 
         public WebClientEnvelope(HttpWebResponse response, IWebClient client, ITokenManager tokenManager)
         {
             _response = response;
             _properties = response.Headers["BrokerProperties"];
             _client = client;
+            _tokenManager = tokenManager;
             _webRequestFactory = new WebRequestFactory(tokenManager);
             _serializer = new MessageSerializer();
 
@@ -61,16 +63,19 @@ namespace Letterbox.WebClient.Clients
         public override void DeadLetter()
         {
             UnlockMessage();
+            Dispose();
         }
 
         public override void Defer()
         {
             UnlockMessage();
+            Dispose();
         }
 
         public override void Abandon()
         {
             UnlockMessage();
+            Dispose();
         }
 
         private void UnlockMessage()
@@ -82,11 +87,13 @@ namespace Letterbox.WebClient.Clients
         public override void Complete()
         {
             DeleteMessage();
+            Dispose();
         }
 
         private void DeleteMessage()
         {
             HttpWebRequest request = _webRequestFactory.CreateWebRequest("DELETE", _messageUri);
+
             SendWebRequest(request);
         }
 
@@ -107,6 +114,11 @@ namespace Letterbox.WebClient.Clients
             {
                 // TODO: Something to dispose?
             }
+        }
+
+        public void Dispose()
+        {
+            _messageStream.Dispose();
         }
     }
 }

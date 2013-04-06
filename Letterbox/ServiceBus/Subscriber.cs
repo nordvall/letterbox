@@ -75,7 +75,7 @@ namespace Letterbox.ServiceBus
             if (EnvelopeReceived != null)
             {
                 var args = CreateEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Received);
-                EnvelopeReceived(args);
+                EnvelopeReceived(this, args);
             }
         }
 
@@ -86,7 +86,7 @@ namespace Letterbox.ServiceBus
             if (EnvelopeConsumed != null)
             {
                 var args = CreateEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Consumed);
-                EnvelopeConsumed(args);
+                EnvelopeConsumed(this, args);
             }
         }
 
@@ -99,7 +99,7 @@ namespace Letterbox.ServiceBus
                 var args = CreateEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Consumed);
                 args.ErrorMessage = ex.Message;
 
-                EnvelopeFailed(args);
+                EnvelopeFailed(this, args);
             }
         }
 

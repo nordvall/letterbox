@@ -50,8 +50,10 @@ namespace Letterbox.WebClient.Tokens
                 ClientPasswordFormat, HttpUtility.UrlEncode(userName),
                 HttpUtility.UrlEncode(userPassword),
                 HttpUtility.UrlEncode(_serviceBusAddress.AbsoluteUri));
+            byte[] data = Encoding.UTF8.GetBytes(requestContent);
 
-            HttpWebRequest request = CreateWebRequest(requestUri, requestContent);
+            var requestFactory = new WebRequestFactory(this);
+            HttpWebRequest request = requestFactory.CreateTokenWebRequest("POST", requestUri, data);
 
             HttpWebResponse response = _webClient.SendRequest(request);
             using (Stream stream = response.GetResponseStream())
@@ -70,25 +72,6 @@ namespace Letterbox.WebClient.Tokens
         {
             string address = string.Format("{0}://{1}:{2}/{3}/$STS/OAuth/", _serviceBusAddress.Scheme, _serviceBusAddress.DnsSafeHost, _serviceBusAddress.Port, _serviceBusAddress.LocalPath);
             return new Uri(address);
-        }
-        
-        private static HttpWebRequest CreateWebRequest(Uri requestUri, string requestContent)
-        {
-            byte[] body = Encoding.UTF8.GetBytes(requestContent);
-
-            HttpWebRequest request = WebRequest.Create(requestUri) as HttpWebRequest;
-            request.AllowAutoRedirect = true;
-            request.MaximumAutomaticRedirections = 1;
-            request.Method = "POST";
-            request.ContentType = "application/x-www-form-urlencoded";
-            request.ContentLength = body.Length;
-
-            using (Stream requestStream = request.GetRequestStream())
-            {
-                requestStream.Write(body, 0, body.Length);
-            }
-
-            return request;
         }
     }
 }

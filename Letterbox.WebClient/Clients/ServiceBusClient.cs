@@ -65,6 +65,7 @@ namespace Letterbox.WebClient.Clients
         {
             var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
             HttpWebRequest request = _webRequestFactory.CreateWebRequest("POST", url, new byte[0]);
+           
             using (HttpWebResponse response = _webClient.SendRequest(request))
             {
                 if (response.StatusCode == HttpStatusCode.Created)
@@ -82,32 +83,6 @@ namespace Letterbox.WebClient.Clients
             return receiveMethod.EndInvoke(result);
         }
 
-        public void DeadLetter(Guid lockTooken)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Defer(Guid lockTooken)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Abandon(Guid lockTooken)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Complete(Guid lockTooken)
-        {
-            var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
-            HttpWebRequest request = _webRequestFactory.CreateWebRequest("DELETE", url);
-            using (HttpWebResponse response = _webClient.SendRequest(request))
-            { 
-            
-            }
-            
-        }
-
         public void Close()
         {
 
@@ -115,7 +90,7 @@ namespace Letterbox.WebClient.Clients
 
         public string Name
         {
-            get { throw new NotImplementedException(); }
+            get { return _address.AbsolutePath; }
         }
     }
 }

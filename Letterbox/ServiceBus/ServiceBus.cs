@@ -21,19 +21,23 @@ namespace Letterbox.ServiceBus
             _clientFactory = clientFactory;
         }
 
-        public void Configure(QueueSubscription subscription) 
+        public void AddConsumer(QueueSubscription subscription) 
         {
             IReceiveClient client = _clientFactory.CreateQueueClient(subscription.QueueName);
-            CreateAndConfigureSubscriber(client, subscription.Consumer);
+            ISubscriber subscriber = CreateAndConfigureSubscriber(client, subscription.Consumer);
+            subscriber.Subscribe();
+            _subscribers.Add(subscriber);
         }
 
-        public void Configure(TopicSubscription subscription)
+        public void AddConsumer(TopicSubscription subscription)
         {
             IReceiveClient client = _clientFactory.CreateSubscriptionClient(subscription.TopicName, subscription.SubscriptionName);
-            CreateAndConfigureSubscriber(client, subscription.Consumer);
+            ISubscriber subscriber = CreateAndConfigureSubscriber(client, subscription.Consumer);
+            subscriber.Subscribe(); 
+            _subscribers.Add(subscriber);
         }
 
-        private void CreateAndConfigureSubscriber(IReceiveClient client, IConsumer consumer)
+        private ISubscriber CreateAndConfigureSubscriber(IReceiveClient client, IConsumer consumer)
         {
             ISubscriber subscriber = new Subscriber(client, consumer);
             
@@ -41,29 +45,22 @@ namespace Letterbox.ServiceBus
             subscriber.EnvelopeFailed += OnMessageFailed;
             subscriber.EnvelopeConsumed += OnMessageConsumed;
 
-            _subscribers.Add(subscriber);
+            return subscriber;
         }
 
-        public void Send(string queueName, object message)
+        public void SendToQueue(string queueName, object message)
         {
             ISendClient client = _clientFactory.CreateQueueClient(queueName);
             var sender = new Sender(client, message);
+            sender.Synchronous = true;
             sender.Send();
         }
 
-        public void Publish(string topicName, object message)
+        public void PublishToTopic(string topicName, object message)
         {
             ISendClient client = _clientFactory.CreateTopicClient(topicName);
             var sender = new Sender(client, message);
             sender.Send();
-        }
-
-        public void Start()
-        {
-            foreach (ISubscriber subscriber in _subscribers)
-            {
-                subscriber.Subscribe();
-            }
         }
 
         public void Stop()
@@ -76,31 +73,31 @@ namespace Letterbox.ServiceBus
 
         public event SubscriberEventHandler MessageReceived;
 
-        private void OnMessageReceived(SubscriberEventArgs e)
+        private void OnMessageReceived(object sender, SubscriberEventArgs e)
         {
             if (MessageReceived != null)
             {
-                MessageReceived(e);
+                MessageReceived(sender, e);
             }
         }
 
         public event SubscriberEventHandler MessageConsumed;
 
-        private void OnMessageConsumed(SubscriberEventArgs e)
+        private void OnMessageConsumed(object sender, SubscriberEventArgs e)
         {
             if (MessageConsumed != null)
             {
-                MessageConsumed(e);
+                MessageConsumed(sender, e);
             }
         }
 
         public event SubscriberEventHandler MessageFailed;
 
-        private void OnMessageFailed(SubscriberEventArgs e)
+        private void OnMessageFailed(object sender, SubscriberEventArgs e)
         {
             if (MessageFailed != null)
             {
-                MessageFailed(e);
+                MessageFailed(sender, e);
             }
         }
     }
