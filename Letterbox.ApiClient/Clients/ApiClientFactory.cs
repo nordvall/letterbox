@@ -16,20 +16,18 @@ namespace Letterbox.ApiClient.Clients
     public class ApiClientFactory : IClientFactory
     {
         private ApiTokenProviderFactory _tokenProvider;
-        private Uri _queueUri;
-        ApiQueueValidator _validator;
+        private Uri _sbUri;
+        private Uri _httpsUri;
 
         public ApiClientFactory(Uri sbUri, Uri httpsUri, NetworkCredential credentials)
         {
-            _queueUri = sbUri;
+            _sbUri = sbUri;
+            _httpsUri = httpsUri;
             _tokenProvider = new ApiTokenProviderFactory(httpsUri, credentials);
-            _validator = new ApiQueueValidator(httpsUri, _tokenProvider);
         }
 
         public IReceiveClient CreateSubscriptionClient(string topicName, string subscriptionName)
         {
-            _validator.EnsureSubscription(topicName, subscriptionName);
-
             MessagingFactory factory = GetMessagingFactory();
             
             SubscriptionClient client = factory.CreateSubscriptionClient(topicName, subscriptionName);
@@ -39,8 +37,6 @@ namespace Letterbox.ApiClient.Clients
 
         public ISendClient CreateTopicClient(string topicName)
         {
-            _validator.EnsureTopic(topicName);
-
             MessagingFactory factory = GetMessagingFactory();
             
             TopicClient client = factory.CreateTopicClient(topicName);
@@ -50,8 +46,6 @@ namespace Letterbox.ApiClient.Clients
 
         public ISendReceiveClient CreateQueueClient(string queueName)
         {
-            _validator.EnsureQueue(queueName);
-
             MessagingFactory factory = GetMessagingFactory();
             QueueClient client = factory.CreateQueueClient(queueName);
             var wrapper = new QueueClientWrapper(client);
@@ -61,8 +55,13 @@ namespace Letterbox.ApiClient.Clients
         private MessagingFactory GetMessagingFactory()
         {
             TokenProvider tokenProvider = _tokenProvider.GetTokenProvider();
-            MessagingFactory messageFactory = MessagingFactory.Create(_queueUri, tokenProvider);
+            MessagingFactory messageFactory = MessagingFactory.Create(_sbUri, tokenProvider);
             return messageFactory;
+        }
+
+        public IQueueValidator GetValidator()
+        {
+            return new ApiQueueValidator(_httpsUri, _tokenProvider);
         }
     }
 }

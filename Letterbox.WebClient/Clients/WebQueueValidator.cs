@@ -9,11 +9,12 @@ using Letterbox.WebClient.Web;
 
 namespace Letterbox.WebClient.Clients
 {
-    public class WebQueueValidator
+    public class WebQueueValidator : IQueueValidator
     {
         private Uri _managementUri;
         private IWebClient _webClient;
         private WebRequestFactory _requestFactory;
+        private UriCreator _uriCreator;
 
         public WebQueueValidator(Uri managementUri, IWebTokenProvider tokenProvider)
             : this(managementUri, tokenProvider, new WebClientWrapper())
@@ -24,10 +25,13 @@ namespace Letterbox.WebClient.Clients
             _managementUri = managementUri;
             _webClient = webClient;
             _requestFactory = new WebRequestFactory(tokenProvider);
+            _uriCreator = new UriCreator(managementUri);
         }
 
-        public void EnsureSubscription(Uri subscriptionUri)
+        public void EnsureSubscription(string topicName, string subscriptionName)
         {
+            Uri subscriptionUri = _uriCreator.GenerateSubscriptionUri(topicName, subscriptionName);
+            
             try
             {
                 VerifyServiceBusObject(subscriptionUri);
@@ -46,13 +50,16 @@ namespace Letterbox.WebClient.Clients
             }
         }
 
-        public void EnsureQueue(Uri queueUri)
+        public void EnsureQueue(string queueName)
         {
+            Uri queueUri = _uriCreator.GenerateQueueUri(queueName);
+            
             VerifyServiceBusObject(queueUri);
         }
 
-        public void EnsureTopic(Uri topicUri)
+        public void EnsureTopic(string topicName)
         {
+            Uri topicUri = _uriCreator.GenerateQueueUri(topicName);
             VerifyServiceBusObject(topicUri);
         }
 

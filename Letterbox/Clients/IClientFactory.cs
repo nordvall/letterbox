@@ -8,5 +8,6 @@ namespace Letterbox.Clients
         ISendReceiveClient CreateQueueClient(string queueName);
         IReceiveClient CreateSubscriptionClient(string topicName, string subscriptionName);
         ISendClient CreateTopicClient(string topicName);
+        IQueueValidator GetValidator();
     }
 }

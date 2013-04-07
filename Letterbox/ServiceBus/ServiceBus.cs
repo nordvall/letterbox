@@ -14,15 +14,21 @@ namespace Letterbox.ServiceBus
     {
         private List<ISubscriber> _subscribers;
         private IClientFactory _clientFactory;
+        private IQueueValidator _validator;
 
         public ServiceBus(IClientFactory clientFactory)
         {
             _subscribers = new List<ISubscriber>();
             _clientFactory = clientFactory;
+            
+            IQueueValidator innerValidator = clientFactory.GetValidator();
+            _validator = new CachingQueueValidator(innerValidator);
         }
 
         public void AddConsumer(QueueSubscription subscription) 
         {
+            _validator.EnsureQueue(subscription.QueueName);
+
             IReceiveClient client = _clientFactory.CreateQueueClient(subscription.QueueName);
             ISubscriber subscriber = CreateAndConfigureSubscriber(client, subscription.Consumer);
             subscriber.Subscribe();
@@ -31,6 +37,8 @@ namespace Letterbox.ServiceBus
 
         public void AddConsumer(TopicSubscription subscription)
         {
+            _validator.EnsureSubscription(subscription.TopicName, subscription.SubscriptionName);
+
             IReceiveClient client = _clientFactory.CreateSubscriptionClient(subscription.TopicName, subscription.SubscriptionName);
             ISubscriber subscriber = CreateAndConfigureSubscriber(client, subscription.Consumer);
             subscriber.Subscribe(); 
@@ -50,6 +58,8 @@ namespace Letterbox.ServiceBus
 
         public void SendToQueue(string queueName, object message)
         {
+            _validator.EnsureQueue(queueName);
+
             ISendClient client = _clientFactory.CreateQueueClient(queueName);
             var sender = new Sender(client, message);
             sender.Synchronous = true;
@@ -58,6 +68,8 @@ namespace Letterbox.ServiceBus
 
         public void PublishToTopic(string topicName, object message)
         {
+            _validator.EnsureTopic(topicName);
+
             ISendClient client = _clientFactory.CreateTopicClient(topicName);
             var sender = new Sender(client, message);
             sender.Send();

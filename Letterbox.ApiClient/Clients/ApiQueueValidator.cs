@@ -8,7 +8,7 @@ using Microsoft.ServiceBus;
 
 namespace Letterbox.ApiClient.Clients
 {
-    public class ApiQueueValidator
+    public class ApiQueueValidator : IQueueValidator
     {
         private Uri _managementUri;
         private ApiTokenProviderFactory _tokenFactory;

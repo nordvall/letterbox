@@ -15,7 +15,6 @@ namespace Letterbox.WebClient.Clients
         private IWebTokenProvider _tokenProvider;
         private WebRequestFactory _requestFactory;
         private UriCreator _uriCreator;
-        private WebQueueValidator _queueValidator;
 
         public WebClientFactory(Uri serviceBusAddress)
             : this(serviceBusAddress, null)
@@ -27,13 +26,11 @@ namespace Letterbox.WebClient.Clients
             _tokenProvider = new WebTokenProvider(serviceBusAddress, credential);
             _requestFactory = new WebRequestFactory(_tokenProvider);
             _uriCreator = new UriCreator(serviceBusAddress);
-            _queueValidator = new WebQueueValidator(serviceBusAddress, _tokenProvider);
         }
 
         public ISendReceiveClient CreateQueueClient(string queueName)
         {
             var url = _uriCreator.GenerateQueueUri(queueName);
-            _queueValidator.EnsureQueue(url);
             var client = new ServiceBusClient(url, _tokenProvider);
 
             return client;
@@ -42,20 +39,20 @@ namespace Letterbox.WebClient.Clients
         public ISendClient CreateTopicClient(string topicName)
         {
             Uri url = _uriCreator.GenerateTopicUri(topicName);
-            _queueValidator.EnsureTopic(url);
 
             return new ServiceBusClient(url, _tokenProvider);
         }
 
         public IReceiveClient CreateSubscriptionClient(string topicName, string subscriptionName)
         {
-            Uri topicUrl = _uriCreator.GenerateTopicUri(topicName);
-            _queueValidator.EnsureTopic(topicUrl);
-
             Uri subscriptionUrl = _uriCreator.GenerateSubscriptionUri(topicName, subscriptionName);
-            _queueValidator.EnsureSubscription(subscriptionUrl);
             
             return new ServiceBusClient(subscriptionUrl, _tokenProvider);
+        }
+
+        public IQueueValidator GetValidator()
+        {
+            return new WebQueueValidator(_serviceBusAddress, _tokenProvider);
         }
     }
 }
