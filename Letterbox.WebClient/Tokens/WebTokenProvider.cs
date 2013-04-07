@@ -62,7 +62,10 @@ namespace Letterbox.WebClient.Tokens
                 HttpUtility.UrlEncode(_stsAddress.AbsoluteUri));
             byte[] data = Encoding.UTF8.GetBytes(requestContent);
 
-            WebToken token = RequestToken(requestUri, data);
+            var requestFactory = new WebRequestFactory(this);
+            HttpWebRequest request = requestFactory.CreateTokenWebRequest(requestUri, data, false);
+            
+            WebToken token = RequestToken(request);
             return token;
         }
 
@@ -72,15 +75,15 @@ namespace Letterbox.WebClient.Tokens
             string requestContent = string.Format("scope={0}", HttpUtility.UrlEncode(_stsAddress.AbsoluteUri));
             byte[] data = Encoding.UTF8.GetBytes(requestContent);
 
-            WebToken token = RequestToken(requestUri, data);
+            var requestFactory = new WebRequestFactory(this);
+            HttpWebRequest request = requestFactory.CreateTokenWebRequest(requestUri, data, true);
+            
+            WebToken token = RequestToken(request);
             return token;
         }
 
-        private WebToken RequestToken(Uri requestUri, byte[] data)
+        private WebToken RequestToken(HttpWebRequest request)
         {
-            var requestFactory = new WebRequestFactory(this);
-            HttpWebRequest request = requestFactory.CreateTokenWebRequest("POST", requestUri, data);
-
             HttpWebResponse response = _webClient.SendRequest(request);
             using (Stream stream = response.GetResponseStream())
             {

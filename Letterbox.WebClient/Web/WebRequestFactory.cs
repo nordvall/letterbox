@@ -43,14 +43,14 @@ namespace Letterbox.WebClient.Web
             return request;
         }
 
-        public HttpWebRequest CreateTokenWebRequest(string httpMethod, Uri requestUri, byte[] data)
+        public HttpWebRequest CreateTokenWebRequest(Uri requestUri, byte[] data, bool useNtlm)
         {
             HttpWebRequest request = WebRequest.Create(requestUri) as HttpWebRequest;
             request.AllowAutoRedirect = true;
             request.MaximumAutomaticRedirections = 1;
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
-            request.ContentLength = data.Length;
+            request.UseDefaultCredentials = useNtlm;
 
             using (Stream requestStream = request.GetRequestStream())
             {
