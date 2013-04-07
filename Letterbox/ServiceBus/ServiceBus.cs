@@ -56,7 +56,7 @@ namespace Letterbox.ServiceBus
             return subscriber;
         }
 
-        public void SendToQueue(string queueName, object message)
+        public void SubmitToQueue(string queueName, object message)
         {
             _validator.EnsureQueue(queueName);
 

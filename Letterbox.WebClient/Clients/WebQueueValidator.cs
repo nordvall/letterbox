@@ -15,7 +15,8 @@ namespace Letterbox.WebClient.Clients
         private IWebClient _webClient;
         private WebRequestFactory _requestFactory;
         private UriCreator _uriCreator;
-
+        private const string _createMessage = "<entry xmlns='http://www.w3.org/2005/Atom'><content type='application/xml'><SubscriptionDescription xmlns:i='http://www.w3.org/2001/XMLSchema-instance' xmlns='http://schemas.microsoft.com/netservices/2010/10/servicebus/connect'></SubscriptionDescription></content></entry>";
+            
         public WebQueueValidator(Uri managementUri, IWebTokenProvider tokenProvider)
             : this(managementUri, tokenProvider, new WebClientWrapper())
         { }
@@ -38,14 +39,19 @@ namespace Letterbox.WebClient.Clients
             }
             catch (ArgumentOutOfRangeException)
             {
-                HttpWebRequest request = _requestFactory.CreateWebRequest("PUT", subscriptionUri);
+                CreateSubscription(subscriptionUri);
+            }
+        }
 
-                using (HttpWebResponse repsonse = _webClient.SendRequest(request))
+        private void CreateSubscription(Uri subscriptionUri)
+        {
+            HttpWebRequest request = _requestFactory.CreateWebRequestWithData("PUT", subscriptionUri, _createMessage);
+
+            using (HttpWebResponse repsonse = _webClient.SendRequest(request))
+            {
+                if (repsonse.StatusCode != HttpStatusCode.Created)
                 {
-                    if (repsonse.StatusCode != HttpStatusCode.Created)
-                    {
-                        throw new Exception(string.Format("Error verifying service bus object: {0}", subscriptionUri));
-                    }
+                    throw new Exception(string.Format("Error verifying service bus object: {0}", subscriptionUri));
                 }
             }
         }

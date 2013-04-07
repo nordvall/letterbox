@@ -11,7 +11,23 @@ namespace Letterbox.WebClient.Web
     {
         public HttpWebResponse SendRequest(HttpWebRequest request)
         {
-            return request.GetResponse() as HttpWebResponse;
+            HttpWebResponse response = null;
+
+            try
+            {
+                response = request.GetResponse() as HttpWebResponse;
+            }
+            catch (WebException ex)
+            {
+                response = ex.Response as HttpWebResponse;
+
+                if (response == null)
+                {
+                    throw;
+                }
+            }
+
+            return response;
         }
 
         public IAsyncResult BeginSendRequest(HttpWebRequest request, AsyncCallback callback, object state)

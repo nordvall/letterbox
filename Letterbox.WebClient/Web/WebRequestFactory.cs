@@ -30,7 +30,13 @@ namespace Letterbox.WebClient.Web
             return request;
         }
 
-        public HttpWebRequest CreateWebRequest(string httpMethod, Uri requestUri, byte[] data)
+        public HttpWebRequest CreateWebRequestWithData(string httpMethod, Uri requestUri, string content)
+        {
+            byte[] data = Encoding.UTF8.GetBytes(content);
+            return CreateWebRequestWithData(httpMethod, requestUri, data);
+        }
+
+        public HttpWebRequest CreateWebRequestWithData(string httpMethod, Uri requestUri, byte[] data)
         {
             HttpWebRequest request = CreateWebRequest(httpMethod, requestUri);
             request.ContentLength = data.Length;

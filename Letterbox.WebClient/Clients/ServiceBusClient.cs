@@ -45,7 +45,7 @@ namespace Letterbox.WebClient.Clients
         {
             var url = new Uri(_address, string.Format("{0}/messages", _address.AbsolutePath));
             byte[] data = _serializer.SerializeMessage(message);
-            HttpWebRequest request = _webRequestFactory.CreateWebRequest("POST", url, data);
+            HttpWebRequest request = _webRequestFactory.CreateWebRequestWithData("POST", url, data);
             _webClient.SendRequest(request);
         }
 
@@ -64,7 +64,7 @@ namespace Letterbox.WebClient.Clients
         public Envelope Receive()
         {
             var url = new Uri(_address, string.Format("{0}/messages/head?timeout={1}", _address.AbsolutePath, Timeout));
-            HttpWebRequest request = _webRequestFactory.CreateWebRequest("POST", url, new byte[0]);
+            HttpWebRequest request = _webRequestFactory.CreateWebRequest("POST", url);
            
             using (HttpWebResponse response = _webClient.SendRequest(request))
             {
