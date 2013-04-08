@@ -7,7 +7,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Letterbox", "Letterbox\Lett
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Letterbox.ApiClient", "Letterbox.ApiClient\Letterbox.ApiClient.csproj", "{3BA3CBE6-58A2-4A06-88F3-324280E5972E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Letterbox.Tests", "Letterbox.Tests\Letterbox.Tests.csproj", "{2373F7A1-D2DB-4017-A8EA-AF56FB223168}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{3A96CD84-22AD-4F39-9BC8-AA54455B3562}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ApiClient", "ApiClient", "{16F0DCDF-8F18-4D0F-A858-90D6AF57DAA6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Letterbox.Tests.Unit", "Letterbox.Tests.Unit\Letterbox.Tests.Unit.csproj", "{2373F7A1-D2DB-4017-A8EA-AF56FB223168}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Letterbox.WebClient.Tests.Unit", "Letterbox.WebClient.Tests.Unit\Letterbox.WebClient.Tests.Unit.csproj", "{BB2AA66E-55B0-414E-87DA-8E797B58C357}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Letterbox.WebClient.Tests.Integration", "Letterbox.WebClient.Tests.Integration\Letterbox.WebClient.Tests.Integration.csproj", "{F3E54434-757C-4CC7-B9F7-45A704FBC2C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Letterbox.ApiClient.Tests.Integration", "Letterbox.ApiClient.Tests.Integration\Letterbox.ApiClient.Tests.Integration.csproj", "{F344F05F-9315-4E72-AED3-F2FFF8DF72A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,8 +41,27 @@ Global
 		{2373F7A1-D2DB-4017-A8EA-AF56FB223168}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2373F7A1-D2DB-4017-A8EA-AF56FB223168}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2373F7A1-D2DB-4017-A8EA-AF56FB223168}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB2AA66E-55B0-414E-87DA-8E797B58C357}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB2AA66E-55B0-414E-87DA-8E797B58C357}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB2AA66E-55B0-414E-87DA-8E797B58C357}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB2AA66E-55B0-414E-87DA-8E797B58C357}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3E54434-757C-4CC7-B9F7-45A704FBC2C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3E54434-757C-4CC7-B9F7-45A704FBC2C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3E54434-757C-4CC7-B9F7-45A704FBC2C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3E54434-757C-4CC7-B9F7-45A704FBC2C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F344F05F-9315-4E72-AED3-F2FFF8DF72A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F344F05F-9315-4E72-AED3-F2FFF8DF72A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F344F05F-9315-4E72-AED3-F2FFF8DF72A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F344F05F-9315-4E72-AED3-F2FFF8DF72A8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{87002431-CFD5-4BDD-90CF-B299AD2EF2E0} = {3A96CD84-22AD-4F39-9BC8-AA54455B3562}
+		{BB2AA66E-55B0-414E-87DA-8E797B58C357} = {3A96CD84-22AD-4F39-9BC8-AA54455B3562}
+		{F3E54434-757C-4CC7-B9F7-45A704FBC2C1} = {3A96CD84-22AD-4F39-9BC8-AA54455B3562}
+		{3BA3CBE6-58A2-4A06-88F3-324280E5972E} = {16F0DCDF-8F18-4D0F-A858-90D6AF57DAA6}
+		{F344F05F-9315-4E72-AED3-F2FFF8DF72A8} = {16F0DCDF-8F18-4D0F-A858-90D6AF57DAA6}
 	EndGlobalSection
 EndGlobal
