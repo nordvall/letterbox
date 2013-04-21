@@ -47,8 +47,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Descriptions\AccessRule.cs" />
     <Compile Include="Clients\MessageSerializer.cs" />
     <Compile Include="Clients\ServiceBusClient.cs" />
+    <Compile Include="Descriptions\ObjectDescriptionBuilder.cs" />
+    <Compile Include="Descriptions\AccessRight.cs" />
     <Compile Include="Clients\UriCreator.cs" />
     <Compile Include="Clients\WebClientEnvelope.cs" />
     <Compile Include="Clients\WebClientFactory.cs" />

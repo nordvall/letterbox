@@ -10,11 +10,11 @@ namespace Letterbox.WebClient.Web
 {
     public class WebRequestFactory
     {
-        private IWebTokenProvider _tokenManager;
+        private IWebTokenProvider _tokenProvider;
 
-        public WebRequestFactory(IWebTokenProvider tokenManager)
+        public WebRequestFactory(IWebTokenProvider tokenProvider)
         {
-            _tokenManager = tokenManager;
+            _tokenProvider = tokenProvider;
         }
 
         public HttpWebRequest CreateWebRequest(string httpMethod, Uri requestUri)
@@ -23,7 +23,7 @@ namespace Letterbox.WebClient.Web
             request.AllowAutoRedirect = true;
             request.MaximumAutomaticRedirections = 1;
             request.Method = httpMethod;
-            request.ContentType = "application/atom+xml;type=entry;charset=utf-8";
+            request.ContentLength = 0;
             
             InsertAccessToken(request);
             
@@ -39,6 +39,7 @@ namespace Letterbox.WebClient.Web
         public HttpWebRequest CreateWebRequestWithData(string httpMethod, Uri requestUri, byte[] data)
         {
             HttpWebRequest request = CreateWebRequest(httpMethod, requestUri);
+            request.ContentType = "application/atom+xml;type=entry;charset=utf-8";
             request.ContentLength = data.Length;
 
             using (Stream requestStream = request.GetRequestStream())
@@ -57,6 +58,7 @@ namespace Letterbox.WebClient.Web
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
             request.UseDefaultCredentials = useNtlm;
+            request.ContentLength = data.Length;
 
             using (Stream requestStream = request.GetRequestStream())
             {
@@ -68,7 +70,7 @@ namespace Letterbox.WebClient.Web
 
         private void InsertAccessToken(HttpWebRequest request)
         {
-            WebToken token = _tokenManager.GetAccessToken();
+            WebToken token = _tokenProvider.GetAccessToken();
             string tokenHeaderValue = string.Format("WRAP access_token=\"{0}\"", token.TokenValue);
             request.Headers.Add(HttpRequestHeader.Authorization, tokenHeaderValue);
         }

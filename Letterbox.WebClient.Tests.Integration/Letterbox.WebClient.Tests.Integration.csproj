@@ -43,6 +43,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RestApi\SubscriptionApiTests.cs" />
+    <Compile Include="RestApi\TopicApiTests.cs" />
+    <Compile Include="RestApi\SubscriptionMessagesApiTests.cs" />
+    <Compile Include="RestApi\TopicMessagesApiTests.cs" />
+    <Compile Include="RestApi\QueueMessagesApiTests.cs" />
+    <Compile Include="RestApi\QueueApiTests.cs" />
+    <Compile Include="ServiceBusHelper.cs" />
+    <Compile Include="TestUsers.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

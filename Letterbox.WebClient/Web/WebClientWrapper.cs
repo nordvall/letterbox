@@ -21,7 +21,7 @@ namespace Letterbox.WebClient.Web
             {
                 response = ex.Response as HttpWebResponse;
 
-                if (response == null)
+                if (ThrowOnHttpError || response == null)
                 {
                     throw;
                 }
@@ -29,6 +29,8 @@ namespace Letterbox.WebClient.Web
 
             return response;
         }
+
+        public bool ThrowOnHttpError { get; set; }
 
         public IAsyncResult BeginSendRequest(HttpWebRequest request, AsyncCallback callback, object state)
         {
