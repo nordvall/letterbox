@@ -10,59 +10,90 @@ namespace Letterbox.ServiceBus
     public class Sender
     {
         private ISendClient _client;
-        private object _message;
-        private TimeSpan _waitForRetry = new TimeSpan(0, 0, 2);
-        private ushort _attempts;
+        private TimeSpan _waitForRetry;
+        private Queue<object> _sendQueue;
+        private object _syncLock = new object();
 
-        public Sender(ISendClient client, object message)
+        public Sender(ISendClient client)
         {
             _client = client;
-            _message = message;
-
-            MaxAttempts = 4;
+            _sendQueue = new Queue<object>();
+            ResetWaitingTimer();
         }
 
-        public bool Synchronous { get; set; }
-
-        public ushort MaxAttempts { get; set; }
-
-        public void Send()
+        private void ResetWaitingTimer()
         {
-            if (Synchronous)
+            _waitForRetry = new TimeSpan(0, 0, 2);
+        }
+
+        private void IncreaseWaitingTimer()
+        {
+            _waitForRetry = _waitForRetry + _waitForRetry;
+        }
+
+        public SenderStatus Status { get; private set; }
+
+        public void Send(object message)
+        {
+            lock (_syncLock)
             {
-                InvokeWithRetry(() => _client.Send(_message));
+                _sendQueue.Enqueue(message);
+
+                if (Status == SenderStatus.Idle)
+                {
+                    TryToSendFirstMessageInQueue();
+                }
+            }
+                
+        }
+
+        private void TryToSendFirstMessageInQueue()
+        {
+            if (_sendQueue.Count > 0)
+            {
+                object message = _sendQueue.Peek();
+                Status = SenderStatus.Sending;
+                _client.BeginSend(message, new AsyncCallback(HasResponse));
             }
             else
             {
-                _client.BeginSend(_message, new AsyncCallback(HasResponse));
+                Status = SenderStatus.Idle;
             }
         }
 
         private void HasResponse(IAsyncResult result)
         {
-            InvokeWithRetry(() => _client.EndSend(result));
+            try
+            {
+                _client.EndSend(result);
+
+                lock (_syncLock)
+                {
+                    _sendQueue.Dequeue();
+                }
+
+                ResetWaitingTimer();
+            }
+            catch (Exception ex)
+            {
+                Status = SenderStatus.WaitForRetry;
+                Thread.Sleep(_waitForRetry);
+                IncreaseWaitingTimer();
+            }
+
+            TryToSendFirstMessageInQueue();
         }
 
         private void InvokeWithRetry(Action action)
         {
-            try
-            {
-                _attempts++;
-                action.Invoke();
-            }
-            catch (Exception ex)
-            {
-                if (_attempts < MaxAttempts)
-                {
-                    Thread.Sleep(_waitForRetry);
-                    _waitForRetry = _waitForRetry + _waitForRetry;
-                    Send();
-                }
-                else
-                {
-                    throw new Exception(string.Format("Message could not be sent in {0} retries", MaxAttempts), ex);
-                }
-            }
+            
+        }
+
+        public enum SenderStatus
+        {
+            Idle,
+            Sending,
+            WaitForRetry
         }
     }
 }

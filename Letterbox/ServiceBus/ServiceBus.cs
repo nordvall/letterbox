@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Letterbox.Clients;
 using Letterbox.Subscriptions;
 
@@ -13,12 +14,15 @@ namespace Letterbox.ServiceBus
     public class ServiceBus
     {
         private List<ISubscriber> _subscribers;
+        private Dictionary<string, Sender> _senders;
+        private ReaderWriterLockSlim _senderCacheLock = new ReaderWriterLockSlim();
         private IClientFactory _clientFactory;
         private IQueueValidator _validator;
 
         public ServiceBus(IClientFactory clientFactory)
         {
             _subscribers = new List<ISubscriber>();
+            _senders = new Dictionary<string, Sender>();
             _clientFactory = clientFactory;
             
             IQueueValidator innerValidator = clientFactory.GetValidator();
@@ -56,23 +60,80 @@ namespace Letterbox.ServiceBus
             return subscriber;
         }
 
+        private Sender LookupSenderInCache(string name)
+        {
+            if (_senders.ContainsKey(name))
+            {
+                return _senders[name];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public void SubmitToQueue(string queueName, object message)
         {
-            _validator.EnsureQueue(queueName);
+            _senderCacheLock.EnterReadLock();
+            Sender sender = LookupSenderInCache(queueName);
+            _senderCacheLock.ExitReadLock();
 
-            ISendClient client = _clientFactory.CreateQueueClient(queueName);
-            var sender = new Sender(client, message);
-            sender.Synchronous = true;
-            sender.Send();
+            if (sender == null)
+            {
+                _senderCacheLock.EnterWriteLock();
+
+                try
+                {
+                    sender = LookupSenderInCache(queueName);
+
+                    if (sender == null)
+                    {
+                        _validator.EnsureQueue(queueName);
+
+                        ISendClient client = _clientFactory.CreateQueueClient(queueName);
+                        sender = new Sender(client);
+                        _senders.Add(queueName, sender);
+                    }
+                }
+                finally
+                {
+                    _senderCacheLock.ExitWriteLock();
+                }
+                
+            }
+            
+            sender.Send(message);
         }
 
         public void PublishToTopic(string topicName, object message)
         {
-            _validator.EnsureTopic(topicName);
+            _senderCacheLock.EnterReadLock();
+            Sender sender = LookupSenderInCache(topicName);
+            _senderCacheLock.ExitReadLock();
 
-            ISendClient client = _clientFactory.CreateTopicClient(topicName);
-            var sender = new Sender(client, message);
-            sender.Send();
+            if (sender == null)
+            {
+                _senderCacheLock.EnterWriteLock();
+
+                try
+                {
+                    sender = LookupSenderInCache(topicName);
+                    if (sender == null)
+                    {
+                        _validator.EnsureTopic(topicName);
+
+                        ISendClient client = _clientFactory.CreateTopicClient(topicName);
+                        sender = new Sender(client);
+                        _senders.Add(topicName, sender);
+                    }
+                }
+                finally
+                {
+                    _senderCacheLock.ExitWriteLock();
+                }
+            }
+
+            sender.Send(message);
         }
 
         public void Stop()
