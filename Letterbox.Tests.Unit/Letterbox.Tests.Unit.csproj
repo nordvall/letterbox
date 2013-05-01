@@ -47,7 +47,6 @@
   <ItemGroup>
     <Compile Include="ServiceBus\CachingQueueValidatorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServiceBus\SendClientStub.cs" />
     <Compile Include="ServiceBus\SenderTests.cs" />
     <Compile Include="ServiceBus\Synchronizer.cs" />
     <Compile Include="ServiceBus\TestableSender.cs" />

@@ -28,18 +28,44 @@ namespace Letterbox.Tests.Unit.ServiceBus
             sender.StubClient.Received().Send(message);
         }
 
-        //[Test]
-        //public void Send_Synchronous_WhenExceptionOccursOnLastAttempt_ExceptionIsForwarded()
-        //{
-        //    ISendClient client = Substitute.For<ISendClient>();
-        //    client.When(c => c.Send(Arg.Any<object>())).Do(c => { throw new Exception(); });
+        [Test]
+        public void Send_WhenSendIsAttempted_CorrectEventIsFired()
+        {
+            var sender = TestableSender.Create();
+            string message = string.Empty;
+            sender.Send(message);
+            sender.WaitForEvent(SenderEventArgs.SenderEventType.Attempted, 1);
 
-        //    string message = string.Empty;
-        //    var sender = new Sender(client, message);
+            Assert.Pass();
+        }
 
-        //    TestDelegate codeToRun = new TestDelegate(() => sender.Send());
-        //    Assert.Throws<Exception>(codeToRun);
-        //}
+        [Test]
+        public void Send_WhenSendSucceeds_CorrectEventIsFired()
+        {
+            var sender = TestableSender.Create();
+            string message = string.Empty;
+            sender.Send(message);
+            sender.WaitForEvent(SenderEventArgs.SenderEventType.Succeeded, 1);
+            Assert.Pass();
+        }
+
+        [Test]
+        public void Send_WhenSendFails_CorrectEventIsFired()
+        {
+            var sender = TestableSender.Create();
+            sender.StubClient
+                .When(c => c.Send(Arg.Any<object>()))
+                .Do(c =>
+                {
+                    throw new Exception();
+                });
+
+            string message = string.Empty;
+            sender.Send(message);
+            sender.WaitForEvent(SenderEventArgs.SenderEventType.Failed, 1);
+
+            Assert.Pass();
+        }
 
         [Test]
         public void Send_WhenFirstAttemptFails_SecondAttemptIsMade()
@@ -65,6 +91,66 @@ namespace Letterbox.Tests.Unit.ServiceBus
             
             //Assert
             sender.StubClient.Received(2).Send(message);
+        }
+
+        [Test]
+        public void Send_WhenMessageFails_StatusIsUpdatedCorrectly()
+        {
+            int counter = 0;
+            var sender = TestableSender.Create();
+            sender.StubClient
+                .When(c => c.Send(Arg.Any<object>()))
+                .Do(c =>
+                {
+                    counter++;
+
+                    if (counter < 2)
+                    {
+                        throw new Exception();
+                    }
+                });
+
+            string message = string.Empty;
+
+            Assert.AreEqual(Sender.SenderStatus.Idle, sender.Status);
+
+            sender.Send(message);
+
+            sender.WaitForEvent(SenderEventArgs.SenderEventType.Failed, 1);
+            Assert.AreEqual(Sender.SenderStatus.WaitForRetry, sender.Status);
+
+            sender.WaitForEvent(SenderEventArgs.SenderEventType.Succeeded, 1);
+            Assert.AreEqual(Sender.SenderStatus.Idle, sender.Status);
+
+        }
+
+        [Test]
+        public void Send_WhenFirstMessageFails_FollowingMessagesAreQueued()
+        {
+            int counter = 0;
+            var sender = TestableSender.Create();
+            sender.StubClient
+                .When(c => c.Send(Arg.Any<object>()))
+                .Do(c =>
+                {
+                    counter++;
+
+                    if (counter < 2)
+                    {
+                        throw new Exception();
+                    }
+                });
+
+            string message = string.Empty;
+
+            sender.Send(message);
+            sender.Send(message);
+            sender.Send(message);
+
+            sender.WaitForEvent(SenderEventArgs.SenderEventType.Succeeded, 3);
+
+            //Assert
+            sender.StubClient.Received(4).Send(message);
         }
     }
 }
