@@ -6,45 +6,47 @@ using Letterbox.Clients;
 using Letterbox.ServiceBus;
 using NSubstitute;
 using NUnit.Framework;
+using System.Threading;
 
-namespace Letterbox.Tests.ServiceBus
+namespace Letterbox.Tests.Unit.ServiceBus
 {
     [TestFixture]
     public class SenderTests
     {
         [Test]
-        public void Send_Synchronous_WhenCalled_ClientIsInvoked()
+        public void Send_WhenCalled_ClientIsInvoked()
         {
-            ISendClient client = Substitute.For<ISendClient>();
+            // Arrange
             string message = string.Empty;
-            var sender = new Sender(client, message);
-            sender.Synchronous = true;
-            sender.Send();
+            var sender = TestableSender.Create();
 
-            client.Received().Send(message);
+            // Act
+            sender.Send(message);
+            sender.WaitForEvent(SenderEventArgs.SenderEventType.Succeeded, 1);
+
+            // Assert
+            sender.StubClient.Received().Send(message);
         }
 
-        [Test]
-        public void Send_Synchronous_WhenExceptionOccursOnLastAttempt_ExceptionIsForwarded()
-        {
-            ISendClient client = Substitute.For<ISendClient>();
-            client.When(c => c.Send(Arg.Any<object>())).Do(c => { throw new Exception(); });
+        //[Test]
+        //public void Send_Synchronous_WhenExceptionOccursOnLastAttempt_ExceptionIsForwarded()
+        //{
+        //    ISendClient client = Substitute.For<ISendClient>();
+        //    client.When(c => c.Send(Arg.Any<object>())).Do(c => { throw new Exception(); });
 
-            string message = string.Empty;
-            var sender = new Sender(client, message);
-            sender.Synchronous = true;
-            sender.MaxAttempts = 1;
+        //    string message = string.Empty;
+        //    var sender = new Sender(client, message);
 
-            TestDelegate codeToRun = new TestDelegate(() => sender.Send());
-            Assert.Throws<Exception>(codeToRun);
-        }
+        //    TestDelegate codeToRun = new TestDelegate(() => sender.Send());
+        //    Assert.Throws<Exception>(codeToRun);
+        //}
 
         [Test]
-        public void Send_Synchronous_WhenFirstAttemptFails_SecondAttemptIsMade()
+        public void Send_WhenFirstAttemptFails_SecondAttemptIsMade()
         {
             int counter = 0;
-            ISendClient client = Substitute.For<ISendClient>();
-            client
+            var sender = TestableSender.Create();
+            sender.StubClient
                 .When(c => c.Send(Arg.Any<object>()))
                 .Do(c => { 
                     counter++;
@@ -56,15 +58,13 @@ namespace Letterbox.Tests.ServiceBus
                 });
 
             string message = string.Empty;
-            var sender = new Sender(client, message);
-            sender.Synchronous = true;
-            sender.MaxAttempts = 2;
+            
+            sender.Send(message);
 
-            //Act
-            sender.Send();
-
+            sender.WaitForEvent(SenderEventArgs.SenderEventType.Succeeded, 1);
+            
             //Assert
-            client.Received(2).Send(message);
+            sender.StubClient.Received(2).Send(message);
         }
     }
 }

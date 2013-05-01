@@ -11,13 +11,13 @@ namespace Letterbox.ServiceBus
     {
         private ISendClient _client;
         private TimeSpan _waitForRetry;
-        private Queue<object> _sendQueue;
+        private Queue<SenderEnvelope> _sendQueue;
         private object _syncLock = new object();
 
         public Sender(ISendClient client)
         {
             _client = client;
-            _sendQueue = new Queue<object>();
+            _sendQueue = new Queue<SenderEnvelope>();
             ResetWaitingTimer();
         }
 
@@ -33,11 +33,18 @@ namespace Letterbox.ServiceBus
 
         public SenderStatus Status { get; private set; }
 
+        public int QueueLength 
+        { 
+            get { return _sendQueue.Count; } 
+        }
+
         public void Send(object message)
         {
+            var envelope = new SenderEnvelope(message);
+
             lock (_syncLock)
             {
-                _sendQueue.Enqueue(message);
+                _sendQueue.Enqueue(envelope);
 
                 if (Status == SenderStatus.Idle)
                 {
@@ -51,9 +58,13 @@ namespace Letterbox.ServiceBus
         {
             if (_sendQueue.Count > 0)
             {
-                object message = _sendQueue.Peek();
+                SenderEnvelope envelope = _sendQueue.Peek();
+                envelope.Attempts.Add(DateTime.Now);
+                
                 Status = SenderStatus.Sending;
-                _client.BeginSend(message, new AsyncCallback(HasResponse));
+                _client.BeginSend(envelope.Message, new AsyncCallback(HasResponse));
+                
+                OnMessageAttempted(envelope);
             }
             else
             {
@@ -67,16 +78,23 @@ namespace Letterbox.ServiceBus
             {
                 _client.EndSend(result);
 
+                SenderEnvelope envelope = null;
+
                 lock (_syncLock)
                 {
-                    _sendQueue.Dequeue();
+                    envelope = _sendQueue.Dequeue();
                 }
 
                 ResetWaitingTimer();
+                OnMessageSucceeded(envelope);
             }
             catch (Exception ex)
             {
+                SenderEnvelope envelope = _sendQueue.Peek();
+                OnMessageFailed(envelope, ex);
+
                 Status = SenderStatus.WaitForRetry;
+
                 Thread.Sleep(_waitForRetry);
                 IncreaseWaitingTimer();
             }
@@ -84,9 +102,50 @@ namespace Letterbox.ServiceBus
             TryToSendFirstMessageInQueue();
         }
 
-        private void InvokeWithRetry(Action action)
+        public event SenderEventHandler MessageAttempted;
+
+        private void OnMessageAttempted(SenderEnvelope envelope)
         {
-            
+            if (MessageAttempted != null)
+            {
+                var args = CreateEventArgs(envelope, SenderEventArgs.SenderEventType.Attempted);
+                MessageAttempted(this, args);
+            }
+        }
+
+        public event SenderEventHandler MessageSucceeded;
+
+        private void OnMessageSucceeded(SenderEnvelope envelope)
+        {
+            if (MessageSucceeded != null)
+            {
+                var args = CreateEventArgs(envelope, SenderEventArgs.SenderEventType.Succeeded);
+                MessageSucceeded(this, args);
+            }
+        }
+
+        public event SenderEventHandler MessageFailed;
+
+        private void OnMessageFailed(SenderEnvelope envelope, Exception ex)
+        {
+            if (MessageFailed != null)
+            {
+                var args = CreateEventArgs(envelope, SenderEventArgs.SenderEventType.Failed);
+                args.ErrorMessage = ex.Message;
+
+                MessageFailed(this, args);
+            }
+        }
+
+        private SenderEventArgs CreateEventArgs(SenderEnvelope envelope, SenderEventArgs.SenderEventType eventType)
+        {
+            var args = new SenderEventArgs()
+            {
+                EventType = eventType,
+                Envelope = envelope
+            };
+
+            return args;
         }
 
         public enum SenderStatus
