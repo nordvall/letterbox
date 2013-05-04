@@ -44,14 +44,22 @@ namespace Letterbox.ServiceBus
 
                 if (envelope != null)
                 {
-                    OnEnvelopeReceived(envelope);
+                    var receivedEventArgs = new SubscriberEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Received);
+                    DispatchEvent(EnvelopeReceived, receivedEventArgs);
+
 
                     _consumer.ConsumeEnvelope(envelope);
 
                     envelope.Complete();
 
-                    OnEnvelopeConsumed(envelope);
+                    var completedEventArgs = new SubscriberEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Consumed);
+                    DispatchEvent(EnvelopeConsumed, completedEventArgs);
+
                 }
+            }
+            catch(TimeoutException)
+            { 
+                // just reconnect
             }
             catch(Exception ex)
             {
@@ -61,66 +69,29 @@ namespace Letterbox.ServiceBus
                     //message.Abandon();
                 }
 
-                OnEnvelopeFailed(envelope, ex);
+                var eventArgs = new SubscriberEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Failed);
+                eventArgs.ErrorMessage = ex.Message;
+                DispatchEvent(EnvelopeFailed, eventArgs);
             }
 
             Subscribe();
         }
 
-
-        public event SubscriberEventHandler EnvelopeReceived;
-
-        private void OnEnvelopeReceived(Envelope envelope)
-        {
-            if (EnvelopeReceived != null)
-            {
-                var args = CreateEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Received);
-                EnvelopeReceived(this, args);
-            }
-        }
-
-        public event SubscriberEventHandler EnvelopeConsumed;
-
-        private void OnEnvelopeConsumed(Envelope envelope)
-        {
-            if (EnvelopeConsumed != null)
-            {
-                var args = CreateEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Consumed);
-                EnvelopeConsumed(this, args);
-            }
-        }
-
-        public event SubscriberEventHandler EnvelopeFailed;
-
-        private void OnEnvelopeFailed(Envelope envelope, Exception ex)
-        {
-            if (EnvelopeFailed != null)
-            {
-                var args = CreateEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Consumed);
-                args.ErrorMessage = ex.Message;
-
-                EnvelopeFailed(this, args);
-            }
-        }
-
-        private SubscriberEventArgs CreateEventArgs(Envelope envelope, SubscriberEventArgs.SubscriberEventType eventType)
-        {
-            var args = new SubscriberEventArgs();
-            args.EventType = eventType;
-
-            if (envelope != null)
-            {
-                args.MessageId = envelope.MessageId;
-                args.EnquedTime = envelope.EnqueuedTimeUtc;
-            }
-
-            return args;
-        }
-
-
         public void Unsubscribe()
         {
             _client.Close();
         }
+
+        private void DispatchEvent(SubscriberEventHandler handler, SubscriberEventArgs eventArgs)
+        {
+            if (handler != null)
+            {
+                handler.Invoke(this, eventArgs);
+            }
+        }
+
+        public event SubscriberEventHandler EnvelopeReceived;
+        public event SubscriberEventHandler EnvelopeConsumed;
+        public event SubscriberEventHandler EnvelopeFailed;
     }
 }

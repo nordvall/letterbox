@@ -11,6 +11,7 @@ namespace Letterbox.ServiceBus
     {
         private ISendClient _client;
         private TimeSpan _waitForRetry;
+        private RetryTimer _retryTimer;
         private Queue<SenderEnvelope> _sendQueue;
         private object _syncLock = new object();
 
@@ -18,17 +19,7 @@ namespace Letterbox.ServiceBus
         {
             _client = client;
             _sendQueue = new Queue<SenderEnvelope>();
-            ResetWaitingTimer();
-        }
-
-        private void ResetWaitingTimer()
-        {
-            _waitForRetry = new TimeSpan(0, 0, 2);
-        }
-
-        private void IncreaseWaitingTimer()
-        {
-            _waitForRetry = _waitForRetry + _waitForRetry;
+            _retryTimer = new RetryTimer();
         }
 
         public SenderStatus Status { get; private set; }
@@ -64,7 +55,8 @@ namespace Letterbox.ServiceBus
                 Status = SenderStatus.Sending;
                 _client.BeginSend(envelope.Message, new AsyncCallback(HasResponse));
                 
-                OnMessageAttempted(envelope);
+                var eventArgs = new SenderEventArgs(envelope, SenderEventArgs.SenderEventType.Attempted);
+                DispatchEvent(MessageAttempted, eventArgs);
             }
             else
             {
@@ -85,68 +77,38 @@ namespace Letterbox.ServiceBus
                     envelope = _sendQueue.Dequeue();
                 }
 
-                ResetWaitingTimer();
-                OnMessageSucceeded(envelope);
+                _retryTimer.Reset();
+
+                var eventArgs = new SenderEventArgs(envelope, SenderEventArgs.SenderEventType.Succeeded);
+                DispatchEvent(MessageSucceeded, eventArgs);
             }
             catch (Exception ex)
             {
-                SenderEnvelope envelope = _sendQueue.Peek();
-                OnMessageFailed(envelope, ex);
-
                 Status = SenderStatus.WaitForRetry;
 
-                Thread.Sleep(_waitForRetry);
-                IncreaseWaitingTimer();
+                SenderEnvelope envelope = _sendQueue.Peek();
+
+                var eventArgs = new SenderEventArgs(envelope, SenderEventArgs.SenderEventType.Failed);
+                eventArgs.ErrorMessage = ex.Message;
+                DispatchEvent(MessageFailed, eventArgs);
+
+                _retryTimer.Wait();
             }
 
             TryToSendFirstMessageInQueue();
         }
 
+        private void DispatchEvent(SenderEventHandler handler, SenderEventArgs eventArgs)
+        {
+            if (handler != null)
+            {
+                handler.Invoke(this, eventArgs);
+            }
+        }
+
         public event SenderEventHandler MessageAttempted;
-
-        private void OnMessageAttempted(SenderEnvelope envelope)
-        {
-            if (MessageAttempted != null)
-            {
-                var args = CreateEventArgs(envelope, SenderEventArgs.SenderEventType.Attempted);
-                MessageAttempted(this, args);
-            }
-        }
-
         public event SenderEventHandler MessageSucceeded;
-
-        private void OnMessageSucceeded(SenderEnvelope envelope)
-        {
-            if (MessageSucceeded != null)
-            {
-                var args = CreateEventArgs(envelope, SenderEventArgs.SenderEventType.Succeeded);
-                MessageSucceeded(this, args);
-            }
-        }
-
         public event SenderEventHandler MessageFailed;
-
-        private void OnMessageFailed(SenderEnvelope envelope, Exception ex)
-        {
-            if (MessageFailed != null)
-            {
-                var args = CreateEventArgs(envelope, SenderEventArgs.SenderEventType.Failed);
-                args.ErrorMessage = ex.Message;
-
-                MessageFailed(this, args);
-            }
-        }
-
-        private SenderEventArgs CreateEventArgs(SenderEnvelope envelope, SenderEventArgs.SenderEventType eventType)
-        {
-            var args = new SenderEventArgs()
-            {
-                EventType = eventType,
-                Envelope = envelope
-            };
-
-            return args;
-        }
 
         public enum SenderStatus
         {

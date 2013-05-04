@@ -143,9 +143,9 @@ namespace Letterbox.Tests.Unit.ServiceBus
 
             string message = string.Empty;
 
-            sender.Send(message);
-            sender.Send(message);
-            sender.Send(message);
+            sender.Send(message); // Should fail and start the retry timer
+            sender.Send(message); // Should be placed in queue until retry timer expires
+            sender.Send(message); // Should also be queued
 
             sender.WaitForEvent(SenderEventArgs.SenderEventType.Succeeded, 3);
 
