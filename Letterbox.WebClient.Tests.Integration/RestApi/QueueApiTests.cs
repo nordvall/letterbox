@@ -33,13 +33,21 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
         [TestFixtureSetUp]
         public void CreateQueue()
         {
-            var rule2 = new AccessRule { UserName = TestUsers.User2.UserName, ServiceBusNamespace = _serviceBusNamespace };
-            rule2.Permissions.Add(AccessRight.Listen);
-
-            var rule3 = new AccessRule { UserName = TestUsers.User3.UserName, ServiceBusNamespace = _serviceBusNamespace };
-            rule3.Permissions.Add(AccessRight.Send);
-
-            var rules = new List<AccessRule> { rule2, rule3 };
+            var rules = new List<AccessRule> 
+            { 
+                new AccessRule 
+                { 
+                    UserName = TestUsers.User2.UserName, 
+                    ServiceBusNamespace = _serviceBusNamespace, 
+                    Permissions = { AccessRight.Listen }
+                },
+                new AccessRule 
+                { 
+                    UserName = TestUsers.User3.UserName, 
+                    ServiceBusNamespace = _serviceBusNamespace,
+                    Permissions = { AccessRight.Send}
+                }
+            };
 
             XElement queueDescription = ObjectDescriptionBuilder.CreateQueueDescription(rules);
             

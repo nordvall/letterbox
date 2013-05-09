@@ -48,7 +48,9 @@
     <Compile Include="Clients\IQueueValidator.cs" />
     <Compile Include="Clients\IReceiveClient.cs" />
     <Compile Include="Clients\IClientFactory.cs" />
+    <Compile Include="Clients\IReceiveClientAsyncExtension.cs" />
     <Compile Include="Clients\ISendClient.cs" />
+    <Compile Include="Clients\ISendClientAsyncExtension.cs" />
     <Compile Include="Clients\ISendReceiveClient.cs" />
     <Compile Include="ServiceBus\CachingQueueValidator.cs" />
     <Compile Include="ServiceBus\RetryTimer.cs" />

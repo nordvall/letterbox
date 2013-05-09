@@ -35,30 +35,12 @@ namespace Letterbox.WebClient.Clients
 
         public ushort Timeout { get; set; }
 
-        public IAsyncResult BeginSend(object message, AsyncCallback callback)
-        {
-            Action<object> sendMethod = Send;
-            return sendMethod.BeginInvoke(message, callback, sendMethod);
-        }
-
         public void Send(object message)
         {
             var url = new Uri(_address, string.Format("{0}/messages", _address.AbsolutePath));
             byte[] data = _serializer.SerializeMessage(message);
             HttpWebRequest request = _webRequestFactory.CreateWebRequestWithData("POST", url, data);
             _webClient.SendRequest(request);
-        }
-
-        public void EndSend(IAsyncResult result)
-        {
-            Action<object> sendMethod = result.AsyncState as Action<object>;
-            sendMethod.EndInvoke(result);
-        }
-
-        public IAsyncResult BeginReceive(AsyncCallback callback)
-        {
-            Func<Envelope> receiveMethod = Receive;
-            return receiveMethod.BeginInvoke(callback, receiveMethod);
         }
 
         public Envelope Receive()
@@ -75,12 +57,6 @@ namespace Letterbox.WebClient.Clients
                 }
             }
             return null;
-        }
-
-        public Envelope EndReceive(IAsyncResult result)
-        {
-            Func<Envelope> receiveMethod = result.AsyncState as Func<Envelope>;
-            return receiveMethod.EndInvoke(result);
         }
 
         public void Close()

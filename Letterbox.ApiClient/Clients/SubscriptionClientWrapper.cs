@@ -24,12 +24,6 @@ namespace Letterbox.ApiClient.Clients
             get { return _client.Name; } 
         }
 
-        public IAsyncResult BeginReceive(AsyncCallback callback)
-        {
-            Func<Envelope> receiveMethod = Receive;
-            return receiveMethod.BeginInvoke(callback, receiveMethod);
-        }
-
         public Envelope Receive()
         {
             BrokeredMessage message = _client.Receive(new TimeSpan(0, 0, Timeout));
@@ -38,12 +32,6 @@ namespace Letterbox.ApiClient.Clients
                 return null;
             }
             return new ApiClientEnvelope(message);
-        }
-
-        public Envelope EndReceive(IAsyncResult result)
-        {
-            Func<Envelope> receiveMethod = result.AsyncState as Func<Envelope>;
-            return receiveMethod.EndInvoke(result);
         }
 
         public void DeadLetter(Guid lockToken)
