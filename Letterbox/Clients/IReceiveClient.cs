@@ -7,9 +7,9 @@ namespace Letterbox.Clients
 {
     public interface IReceiveClient
     {
-        Envelope Receive();
-        void Close();
         string Name { get; }
         ushort Timeout { get; set; }
+        Envelope Receive();
+        void Close();
     }
 }

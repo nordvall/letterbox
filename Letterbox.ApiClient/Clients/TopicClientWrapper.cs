@@ -24,7 +24,7 @@ namespace Letterbox.ApiClient.Clients
         public void Send(object message)
         {
             var nativeMessage = new BrokeredMessage(message);
-            _client.Send(nativeMessage);
+            ExceptionGuard.InvokeMethod(() => _client.Send(nativeMessage));
         }
     }
 }

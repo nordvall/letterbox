@@ -4,12 +4,12 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A1654235-D8A5-4F40-B372-16BCA417566F}</ProjectGuid>
+    <ProjectGuid>{AD6985C2-A3EB-4D26-8E5B-D40B7243BA3F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Letterbox</RootNamespace>
-    <AssemblyName>Letterbox</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <RootNamespace>Letterbox.ApiClient.Tests.Unit</RootNamespace>
+    <AssemblyName>Letterbox.ApiClient.Tests.Unit</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -29,54 +29,42 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>..\Letterbox.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.ServiceBus">
+      <HintPath>..\packages\ServiceBus.v1_0.1.0.1.0\lib\net40-full\Microsoft.ServiceBus.dll</HintPath>
+    </Reference>
+    <Reference Include="NSubstitute">
+      <HintPath>..\packages\NSubstitute.1.5.0.0\lib\NET40\NSubstitute.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.framework, Version=2.6.2.12296, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Clients\ServiceBusCommunicationException.cs" />
-    <Compile Include="Clients\Envelope.cs" />
-    <Compile Include="Clients\IQueueValidator.cs" />
-    <Compile Include="Clients\IReceiveClient.cs" />
-    <Compile Include="Clients\IClientFactory.cs" />
-    <Compile Include="Clients\IReceiveClientAsyncExtension.cs" />
-    <Compile Include="Clients\ISendClient.cs" />
-    <Compile Include="Clients\ISendClientAsyncExtension.cs" />
-    <Compile Include="Clients\ISendReceiveClient.cs" />
-    <Compile Include="Clients\ServiceBusObjectNotFoundException.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ServiceBus\CachingQueueValidator.cs" />
-    <Compile Include="ServiceBus\RetryTimer.cs" />
-    <Compile Include="ServiceBus\SenderEnvelope.cs" />
-    <Compile Include="ServiceBus\SenderEventArgs.cs" />
-    <Compile Include="ServiceBus\SenderEventHandler.cs" />
-    <Compile Include="ServiceBus\Sender.cs" />
-    <Compile Include="ServiceBus\ServiceBus.cs" />
-    <Compile Include="Subscriptions\Consumer.cs" />
-    <Compile Include="Subscriptions\IConsumer.cs" />
+    <Compile Include="ExceptionGuardTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServiceBus\ISubscriber.cs" />
-    <Compile Include="Subscriptions\QueueSubscription.cs" />
-    <Compile Include="ServiceBus\Subscriber.cs" />
-    <Compile Include="ServiceBus\SubscriberEventArgs.cs" />
-    <Compile Include="ServiceBus\SubscriberEventHandler.cs" />
-    <Compile Include="Subscriptions\TopicSubscription.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Letterbox.snk">
-      <Link>Letterbox.snk</Link>
-    </None>
+    <ProjectReference Include="..\Letterbox.ApiClient\Letterbox.ApiClient.csproj">
+      <Project>{3ba3cbe6-58a2-4a06-88f3-324280e5972e}</Project>
+      <Name>Letterbox.ApiClient</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Letterbox\Letterbox.csproj">
+      <Project>{a1654235-d8a5-4f40-b372-16bca417566f}</Project>
+      <Name>Letterbox</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -27,32 +27,36 @@ namespace Letterbox.ApiClient.Clients
 
         public Envelope Receive()
         {
-            BrokeredMessage message = _client.Receive();
+            BrokeredMessage message = null;
+
+            ExceptionGuard.InvokeMethod(() => message = _client.Receive());
+            
             if (message == null)
             {
                 return null;
             }
+
             return new ApiClientEnvelope(message);
         }
 
         public void DeadLetter(Guid lockToken)
         {
-            _client.DeadLetter(lockToken);
+            ExceptionGuard.InvokeMethod(() => _client.DeadLetter(lockToken));
         }
 
         public void Defer(Guid lockToken)
         {
-            _client.Defer(lockToken);
+            ExceptionGuard.InvokeMethod(() => _client.Defer(lockToken));
         }
 
         public void Abandon(Guid lockToken)
         {
-            _client.Abandon(lockToken);
+            ExceptionGuard.InvokeMethod(() => _client.Abandon(lockToken));
         }
 
         public void Complete(Guid lockToken)
         {
-            _client.Complete(lockToken);
+            ExceptionGuard.InvokeMethod(() => _client.Complete(lockToken));
         }
 
         public void Close()
@@ -63,7 +67,7 @@ namespace Letterbox.ApiClient.Clients
         public void Send(object message)
         {
             var nativeMessage = new BrokeredMessage(message);
-            _client.Send(nativeMessage);
+            ExceptionGuard.InvokeMethod(() => _client.Send(nativeMessage));
         }
     }
 }

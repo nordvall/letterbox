@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Clients\ApiClientEnvelope.cs" />
     <Compile Include="Clients\ApiQueueValidator.cs" />
+    <Compile Include="Clients\ExceptionGuard.cs" />
     <Compile Include="Tokens\ApiTokenProviderFactory.cs" />
     <Compile Include="Clients\SubscriptionClientWrapper.cs" />
     <Compile Include="Clients\QueueClientWrapper.cs" />
