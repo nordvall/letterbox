@@ -14,15 +14,14 @@ namespace Letterbox.ServiceBus
     public class ServiceBus
     {
         private List<ISubscriber> _subscribers;
-        private Dictionary<string, Sender> _senders;
-        private ReaderWriterLockSlim _senderCacheLock = new ReaderWriterLockSlim();
+        private SenderCache _senders;
         private IClientFactory _clientFactory;
         private IQueueValidator _validator;
 
         public ServiceBus(IClientFactory clientFactory)
         {
             _subscribers = new List<ISubscriber>();
-            _senders = new Dictionary<string, Sender>();
+            _senders = new SenderCache();
             _clientFactory = clientFactory;
             
             IQueueValidator innerValidator = clientFactory.GetValidator();
@@ -52,88 +51,68 @@ namespace Letterbox.ServiceBus
         private ISubscriber CreateAndConfigureSubscriber(IReceiveClient client, IConsumer consumer)
         {
             ISubscriber subscriber = new Subscriber(client, consumer);
-            
-            subscriber.EnvelopeReceived += OnMessageReceived;
-            subscriber.EnvelopeFailed += OnMessageFailed;
-            subscriber.EnvelopeConsumed += OnMessageConsumed;
+
+            subscriber.EnvelopeReceived += delegate(object obj, SubscriberEventArgs args) { DispatchEvent(MessageReceived, args); };
+            subscriber.EnvelopeFailed += delegate(object obj, SubscriberEventArgs args) { DispatchEvent(MessageFailed, args); };
+            subscriber.EnvelopeConsumed += delegate(object obj, SubscriberEventArgs args) { DispatchEvent(MessageConsumed, args); };
 
             return subscriber;
         }
 
-        private Sender LookupSenderInCache(string name)
-        {
-            if (_senders.ContainsKey(name))
-            {
-                return _senders[name];
-            }
-            else
-            {
-                return null;
-            }
-        }
-
         public void SubmitToQueue(string queueName, object message)
         {
-            _senderCacheLock.EnterReadLock();
-            Sender sender = LookupSenderInCache(queueName);
-            _senderCacheLock.ExitReadLock();
+            Sender sender = GetQueueSender(queueName);
+            sender.Send(message);
+        }
+
+        private Sender GetQueueSender(string queueName)
+        {
+            Sender sender = _senders.GetSender(queueName);
 
             if (sender == null)
             {
-                _senderCacheLock.EnterWriteLock();
-
-                try
-                {
-                    sender = LookupSenderInCache(queueName);
-
-                    if (sender == null)
-                    {
-                        _validator.EnsureQueue(queueName);
-
-                        ISendClient client = _clientFactory.CreateQueueClient(queueName);
-                        sender = new Sender(client);
-                        _senders.Add(queueName, sender);
-                    }
-                }
-                finally
-                {
-                    _senderCacheLock.ExitWriteLock();
-                }
-                
+                sender = CreateQueueSender(queueName);
+                _senders.AddSender(queueName, sender);
             }
-            
-            sender.Send(message);
+
+            return sender;
+        }
+
+        private Sender CreateQueueSender(string queueName)
+        {
+            _validator.EnsureQueue(queueName);
+            ISendClient client = _clientFactory.CreateQueueClient(queueName);
+            Sender sender = new Sender(client);
+
+            return sender;
         }
 
         public void PublishToTopic(string topicName, object message)
         {
-            _senderCacheLock.EnterReadLock();
-            Sender sender = LookupSenderInCache(topicName);
-            _senderCacheLock.ExitReadLock();
+            Sender sender = GetTopicSender(topicName);
+            sender.Send(message);
+        }
+
+        private Sender GetTopicSender(string topicName)
+        {
+            Sender sender = _senders.GetSender(topicName);
 
             if (sender == null)
             {
-                _senderCacheLock.EnterWriteLock();
-
-                try
-                {
-                    sender = LookupSenderInCache(topicName);
-                    if (sender == null)
-                    {
-                        _validator.EnsureTopic(topicName);
-
-                        ISendClient client = _clientFactory.CreateTopicClient(topicName);
-                        sender = new Sender(client);
-                        _senders.Add(topicName, sender);
-                    }
-                }
-                finally
-                {
-                    _senderCacheLock.ExitWriteLock();
-                }
+                sender = CreateTopicSender(topicName);
+                _senders.AddSender(topicName, sender);
             }
 
-            sender.Send(message);
+            return sender;
+        }
+
+        private Sender CreateTopicSender(string topicName)
+        {
+            _validator.EnsureTopic(topicName);
+            ISendClient client = _clientFactory.CreateTopicClient(topicName);
+            Sender sender = new Sender(client);
+
+            return sender;
         }
 
         public void Stop()
@@ -144,34 +123,16 @@ namespace Letterbox.ServiceBus
             }
         }
 
+        private void DispatchEvent(SubscriberEventHandler handler, SubscriberEventArgs eventArgs)
+        {
+            if (handler != null)
+            {
+                handler.Invoke(this, eventArgs);
+            }
+        }
+
         public event SubscriberEventHandler MessageReceived;
-
-        private void OnMessageReceived(object sender, SubscriberEventArgs e)
-        {
-            if (MessageReceived != null)
-            {
-                MessageReceived(sender, e);
-            }
-        }
-
         public event SubscriberEventHandler MessageConsumed;
-
-        private void OnMessageConsumed(object sender, SubscriberEventArgs e)
-        {
-            if (MessageConsumed != null)
-            {
-                MessageConsumed(sender, e);
-            }
-        }
-
         public event SubscriberEventHandler MessageFailed;
-
-        private void OnMessageFailed(object sender, SubscriberEventArgs e)
-        {
-            if (MessageFailed != null)
-            {
-                MessageFailed(sender, e);
-            }
-        }
     }
 }

@@ -58,6 +58,7 @@
     </Compile>
     <Compile Include="ServiceBus\CachingQueueValidator.cs" />
     <Compile Include="ServiceBus\RetryTimer.cs" />
+    <Compile Include="ServiceBus\SenderCache.cs" />
     <Compile Include="ServiceBus\SenderEnvelope.cs" />
     <Compile Include="ServiceBus\SenderEventArgs.cs" />
     <Compile Include="ServiceBus\SenderEventHandler.cs" />
