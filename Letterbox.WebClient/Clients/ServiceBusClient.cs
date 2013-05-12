@@ -52,11 +52,28 @@ namespace Letterbox.WebClient.Clients
             {
                 if (response.StatusCode == HttpStatusCode.Created)
                 {
-                    Envelope envelope = new WebClientEnvelope(response, _webClient, _tokenManager);
+                    Envelope envelope = new WebClientEnvelope(response);
                     return envelope;
                 }
             }
             return null;
+        }
+
+        public void Complete(Envelope envelope)
+        {
+            var url = new Uri(_address, string.Format("{0}/messages/{1}/{2}", _address.AbsolutePath, envelope.MessageId, envelope.LockToken));
+            HttpWebRequest request = _webRequestFactory.CreateWebRequest("DELETE", url);
+
+            using (HttpWebResponse response = _webClient.SendRequest(request))
+            {
+
+            }
+
+            var resource = envelope as IDisposable;
+            if (resource != null)
+            {
+                resource.Dispose();
+            }
         }
 
         public void Close()

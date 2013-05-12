@@ -23,13 +23,10 @@ namespace Letterbox.WebClient.Clients
         private MessageSerializer _serializer;
         private IWebTokenProvider _tokenManager;
 
-        public WebClientEnvelope(HttpWebResponse response, IWebClient client, IWebTokenProvider tokenManager)
+        public WebClientEnvelope(HttpWebResponse response)
         {
             _response = response;
             _properties = response.Headers["BrokerProperties"];
-            _client = client;
-            _tokenManager = tokenManager;
-            _webRequestFactory = new WebRequestFactory(tokenManager);
             _serializer = new MessageSerializer();
 
             _messageUri = new Uri(response.Headers["Location"]);
@@ -54,66 +51,10 @@ namespace Letterbox.WebClient.Clients
             }
         }
 
-        public override T GetMessage<T>() 
+        public override T GetMessage<T>()
         {
             T message = _serializer.DeserializeMessage<T>(_messageStream);
             return message;
-        }
-
-        public override void DeadLetter()
-        {
-            UnlockMessage();
-            Dispose();
-        }
-
-        public override void Defer()
-        {
-            UnlockMessage();
-            Dispose();
-        }
-
-        public override void Abandon()
-        {
-            UnlockMessage();
-            Dispose();
-        }
-
-        private void UnlockMessage()
-        {
-            HttpWebRequest request = _webRequestFactory.CreateWebRequest("PUT", _messageUri);
-            SendWebRequest(request);
-        }
-
-        public override void Complete()
-        {
-            DeleteMessage();
-            Dispose();
-        }
-
-        private void DeleteMessage()
-        {
-            HttpWebRequest request = _webRequestFactory.CreateWebRequest("DELETE", _messageUri);
-
-            SendWebRequest(request);
-        }
-
-        private void SendWebRequest(HttpWebRequest request)
-        {
-            HttpWebResponse response = null;
-
-            try
-            {
-                response = _client.SendRequest(request);
-            }
-            catch (Exception)
-            {
-                // TODO: Translate exceptions.
-                throw;
-            }
-            finally
-            {
-                // TODO: Something to dispose?
-            }
         }
 
         public void Dispose()

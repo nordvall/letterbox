@@ -50,7 +50,7 @@ namespace Letterbox.ServiceBus
 
                     _consumer.ConsumeEnvelope(envelope);
 
-                    envelope.Complete();
+                    _client.Complete(envelope);
 
                     var completedEventArgs = new SubscriberEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Consumed);
                     DispatchEvent(EnvelopeConsumed, completedEventArgs);
@@ -63,12 +63,6 @@ namespace Letterbox.ServiceBus
             }
             catch(Exception ex)
             {
-                if (envelope != null)
-                {
-                    envelope.DeadLetter();
-                    //message.Abandon();
-                }
-
                 var eventArgs = new SubscriberEventArgs(envelope, SubscriberEventArgs.SubscriberEventType.Failed);
                 eventArgs.ErrorMessage = ex.Message;
                 DispatchEvent(EnvelopeFailed, eventArgs);

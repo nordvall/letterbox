@@ -8,7 +8,7 @@ namespace Letterbox.ServiceBus
 {
     public class SenderCache
     {
-        private Dictionary<string, Sender> _senders;
+        private Dictionary<string, Sender> _senders = new Dictionary<string, Sender>();
         private ReaderWriterLockSlim _senderCacheLock = new ReaderWriterLockSlim();
 
         public Sender GetSender(string name)

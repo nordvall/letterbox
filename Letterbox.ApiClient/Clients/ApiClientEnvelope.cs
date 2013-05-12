@@ -15,33 +15,15 @@ namespace Letterbox.ApiClient.Clients
         {
             _message = message;
 
-            this.EnqueuedTimeUtc = message.EnqueuedTimeUtc;
-            this.MessageId = message.MessageId;
+            EnqueuedTimeUtc = message.EnqueuedTimeUtc;
+            MessageId = new Guid(message.MessageId);
+            LockToken = message.LockToken;
+            SequenceNumber = Convert.ToInt32(message.SequenceNumber);
         }
 
         public override T GetMessage<T>()
         {
             return _message.GetBody<T>();
-        }
-
-        public override void DeadLetter()
-        {
-            _message.DeadLetter();
-        }
-
-        public override void Defer()
-        {
-            _message.Defer();
-        }
-
-        public override void Abandon()
-        {
-            _message.Abandon();
-        }
-
-        public override void Complete()
-        {
-            _message.Complete();
         }
     }
 }

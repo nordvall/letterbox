@@ -19,7 +19,7 @@ namespace Letterbox.ServiceBus
         }
 
         public SubscriberEventType EventType { get; set; }
-        public string MessageId { get; set; }
+        public Guid MessageId { get; set; }
         public DateTime EnquedTime { get; set; }
         public string ErrorMessage { get; set; }
 

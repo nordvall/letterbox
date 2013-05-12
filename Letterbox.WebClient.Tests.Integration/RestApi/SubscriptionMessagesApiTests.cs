@@ -68,7 +68,7 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
         }
 
         [Test]
-        public void Receive_WhenUserHasListenPermissionAndMessagesExist_Http201IsReturned()
+        public void ReceiveAndLock_WhenUserHasListenPermissionAndMessagesExist_Http201IsReturned()
         {
             SendMessageToTopic();
 
@@ -90,7 +90,7 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
         }
 
         [Test]
-        public void Receive_WhenUserHasListenPermissionAndMessagesDoesNotExist_Http204IsReturned()
+        public void ReceiveAndLock_WhenUserHasListenPermissionAndMessagesDoesNotExist_Http204IsReturned()
         {
             var url = new Uri(_subscriptionUri, string.Format("{0}/messages/head?timeout=2", _subscriptionUri.AbsolutePath));
             WebRequestFactory requestFactory = ServiceBusHelper.GetWebRequestFactoryWithCredentials(TestUsers.User2);
@@ -103,7 +103,7 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
         }
 
         [Test]
-        public void Receive_WhenUserDoesNotHaveListenPermission_Http401IsReturned()
+        public void ReceiveAndLock_WhenUserDoesNotHaveListenPermission_Http401IsReturned()
         {
             var url = new Uri(_subscriptionUri, string.Format("{0}/messages/head?timeout=2", _subscriptionUri.AbsolutePath));
             WebRequestFactory requestFactory = ServiceBusHelper.GetWebRequestFactoryWithCredentials(TestUsers.User3);
@@ -114,7 +114,7 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
         }
 
         [Test]
-        public void Receive_WhenTopicDoesNotExist_Http404IsReturned()
+        public void ReceiveAndLock_WhenTopicDoesNotExist_Http404IsReturned()
         {
             string topicName = Guid.NewGuid().ToString();
             Uri subscriptionUri = _uriCreator.GenerateSubscriptionUri(topicName, _subscriptionName);
@@ -128,7 +128,7 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
         }
 
         [Test]
-        public void Receive_WhenSubscriptionDoesNotExist_Http404IsReturned()
+        public void ReceiveAndLock_WhenSubscriptionDoesNotExist_Http404IsReturned()
         {
             string subscriptionName = Guid.NewGuid().ToString();
             Uri subscriptionUri = _uriCreator.GenerateSubscriptionUri(_topicName, subscriptionName);

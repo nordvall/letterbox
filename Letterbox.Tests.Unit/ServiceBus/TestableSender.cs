@@ -53,29 +53,10 @@ namespace Letterbox.Tests.Unit.ServiceBus
 
         public static TestableSender Create()
         {
-            ISendClient client = CreateStubClient();
+            ISendClient client = Substitute.For<ISendClient>();
             var sender = new TestableSender(client);
 
             return sender;
-        }
-
-        private static ISendClient CreateStubClient()
-        {
-            ISendClient client = Substitute.For<ISendClient>();
-            client.BeginSend(Arg.Any<object>(), Arg.Any<AsyncCallback>()).Returns(x =>
-            {
-                Action<object> sendMethod = client.Send;
-                return sendMethod.BeginInvoke(x.Args()[0], x.Args()[1] as AsyncCallback, sendMethod);
-            });
-
-            client.When(x => x.EndSend(Arg.Any<IAsyncResult>())).Do(x =>
-            {
-                IAsyncResult result = x.Args()[0] as IAsyncResult;
-                Action<object> sendMethod = result.AsyncState as Action<object>;
-                sendMethod.EndInvoke(result);
-            });
-
-            return client;
         }
 
         public void WaitForEvent(SenderEventArgs.SenderEventType eventType, ushort numberOfTimes)

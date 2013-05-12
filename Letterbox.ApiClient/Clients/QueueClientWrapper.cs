@@ -39,24 +39,9 @@ namespace Letterbox.ApiClient.Clients
             return new ApiClientEnvelope(message);
         }
 
-        public void DeadLetter(Guid lockToken)
+        public void Complete(Envelope envelope)
         {
-            ExceptionGuard.InvokeMethod(() => _client.DeadLetter(lockToken));
-        }
-
-        public void Defer(Guid lockToken)
-        {
-            ExceptionGuard.InvokeMethod(() => _client.Defer(lockToken));
-        }
-
-        public void Abandon(Guid lockToken)
-        {
-            ExceptionGuard.InvokeMethod(() => _client.Abandon(lockToken));
-        }
-
-        public void Complete(Guid lockToken)
-        {
-            ExceptionGuard.InvokeMethod(() => _client.Complete(lockToken));
+            ExceptionGuard.InvokeMethod(() => _client.Complete(envelope.LockToken));
         }
 
         public void Close()

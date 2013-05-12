@@ -101,7 +101,7 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
         }
 
         [Test]
-        public void Receive_WhenUserHasListenPermissionAndMessagesExistInQueue_Http201IsReturned()
+        public void ReceiveAndLock_WhenUserHasListenPermissionAndMessagesExistInQueue_Http201IsReturned()
         {
             SendMessageToQueue();
 
@@ -114,6 +114,20 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
             Assert.AreEqual(HttpStatusCode.Created, receiveResponse.StatusCode);
         }
 
+        [Test]
+        public void ReceiveAndDelete_WhenUserHasListenPermissionAndMessagesExistInQueue_Http200IsReturned()
+        {
+            SendMessageToQueue();
+
+            WebRequestFactory requestFactory = ServiceBusHelper.GetWebRequestFactoryWithCredentials(TestUsers.User1);
+
+            var receiveUrl = new Uri(_queueUri, string.Format("{0}/messages/head?timeout=2", _queueUri.AbsolutePath));
+            HttpWebRequest receiveRequest = requestFactory.CreateWebRequest("DELETE", receiveUrl);
+            HttpWebResponse receiveResponse = _webClient.SendRequest(receiveRequest);
+
+            Assert.AreEqual(HttpStatusCode.OK, receiveResponse.StatusCode);
+        }
+
         private void SendMessageToQueue()
         {
             WebRequestFactory requestFactory = ServiceBusHelper.GetWebRequestFactory();
@@ -123,7 +137,7 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
         }
 
         [Test]
-        public void Receive_WhenUserHasListenPermissionAndMessagesDoNotExistInQueue_Http204IsReturned()
+        public void ReceiveAndLock_WhenUserHasListenPermissionAndMessagesDoNotExistInQueue_Http204IsReturned()
         {
             var url = new Uri(_queueUri, string.Format("{0}/messages/head?timeout=2", _queueUri.AbsolutePath));
             WebRequestFactory requestFactory = ServiceBusHelper.GetWebRequestFactoryWithCredentials(TestUsers.User2);
@@ -134,7 +148,18 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
         }
 
         [Test]
-        public void Receive_WhenUserDoesNotHaveListenPermission_Http401IsReturned()
+        public void ReceiveAndDelete_WhenUserHasListenPermissionAndMessagesDoNotExistInQueue_Http204IsReturned()
+        {
+            var url = new Uri(_queueUri, string.Format("{0}/messages/head?timeout=2", _queueUri.AbsolutePath));
+            WebRequestFactory requestFactory = ServiceBusHelper.GetWebRequestFactoryWithCredentials(TestUsers.User2);
+            HttpWebRequest request = requestFactory.CreateWebRequest("DELETE", url);
+            HttpWebResponse response = _webClient.SendRequest(request);
+
+            Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+        }
+
+        [Test]
+        public void ReceiveAndLock_WhenUserDoesNotHaveListenPermission_Http401IsReturned()
         {
             var url = new Uri(_queueUri, string.Format("{0}/messages/head?timeout=2", _queueUri.AbsolutePath));
             WebRequestFactory requestFactory = ServiceBusHelper.GetWebRequestFactoryWithCredentials(TestUsers.User3);
@@ -145,7 +170,7 @@ namespace Letterbox.WebClient.Tests.Integration.RestApi
         }
 
         [Test]
-        public void Receive_WhenQueueDoesNotExist_Http404IsReturned()
+        public void ReceiveAndLock_WhenQueueDoesNotExist_Http404IsReturned()
         {
             string queueName = Guid.NewGuid().ToString();
             Uri queueUri = _uriCreator.GenerateQueueUri(queueName);
