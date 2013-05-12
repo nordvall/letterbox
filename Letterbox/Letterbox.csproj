@@ -56,7 +56,6 @@
     <Compile Include="Clients\ServiceBusObjectNotFoundException.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="ServiceBus\CachingQueueValidator.cs" />
     <Compile Include="ServiceBus\RetryTimer.cs" />
     <Compile Include="ServiceBus\SenderCache.cs" />
     <Compile Include="ServiceBus\SenderEnvelope.cs" />

@@ -23,9 +23,8 @@ namespace Letterbox.ServiceBus
             _subscribers = new List<ISubscriber>();
             _senders = new SenderCache();
             _clientFactory = clientFactory;
-            
-            IQueueValidator innerValidator = clientFactory.GetValidator();
-            _validator = new CachingQueueValidator(innerValidator);
+
+            _validator = clientFactory.GetValidator();
         }
 
         public void AddConsumer(QueueSubscription subscription) 
